@@ -77,11 +77,14 @@ export class TextManager {
      * Preserves existing instance data.
      */
     private grow(requiredCapacity: number) {
-        // Double capacity until we can fit the required amount
-        let newCapacity = this.capacity * 2;
-        while (newCapacity < requiredCapacity) {
-            newCapacity *= 2;
-        }
+        // Grow more tightly: 20% headroom or at least 500 units
+        let newCapacity = Math.max(
+            Math.ceil(requiredCapacity * 1.2), 
+            this.capacity + 500
+        );
+        
+        // Safety cap for initial small jumps
+        if (newCapacity < requiredCapacity) newCapacity = requiredCapacity + 100;
 
         const oldMesh = this.mesh;
         const oldCount = oldMesh.count;
@@ -184,6 +187,11 @@ export class TextManager {
 
         const startTime = performance.now();
 
+        // Pre-allocate buffer once (text length is the max possible instances)
+        if (text.length > this.capacity) {
+            this.grow(text.length);
+        }
+
         let cursorX = 0;
         let cursorY = 0;
         const dummy = new THREE.Object3D();
@@ -217,29 +225,7 @@ export class TextManager {
                  continue;
             }
 
-            // Grow buffer if needed
-            if (instanceIndex >= this.capacity) {
-                this.grow(instanceIndex + 100); // Grow with some headroom
-                // Important: Refresh attribute references as grow() replaces geometry
-                uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
-                colorAttribute = this.mesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
-            }
-
-            // Calculate position
-            // Font JSON glyphs have xoffset, yoffset.
-            // In Three.js, plane is centered at 0,0 usually.
-            // We need to align it. 
-            // charData.width/height is the size of the plane.
-            // We scale the instance to width/height.
-            // Position is cursorX + xoffset + width/2, cursorY - (yoffset + height/2) ?
-            // Coordinate systems:
-            // Font system: y grows down usually (BMFont). MSDF gen usually follows BMFont.
-            // Three.js: y grows up.
-            // We might need to invert Y.
-
-            // Let's assume we map 1 unit = 1 pixel for now, or scale down.
             const scale = this.textScale;
-            
             dummy.scale.set(charData.width * scale, charData.height * scale, 1);
             
             // Position
@@ -290,6 +276,12 @@ export class TextManager {
      */
     renderGlyphs(glyphs: any[]) { // glyphs expected to be in world space (relative to 0,0,0) if offset
         const startTime = performance.now();
+        
+        // Pre-allocate buffer once if we know the size
+        if (glyphs.length > this.capacity) {
+            this.grow(glyphs.length);
+        }
+
         let instanceIndex = 0;
         const dummy = new THREE.Object3D();
         let uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
@@ -300,13 +292,9 @@ export class TextManager {
         const scale = this.textScale; // Use textScale for local glyph scaling
 
         for (const glyph of glyphs) {
-            // Grow buffer if needed
-            if (instanceIndex >= this.capacity) {
-                this.grow(instanceIndex + 100); // Grow with some headro    om
-                // Important: Refresh attribute references
-                uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
-                colorAttribute = this.mesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
-            }
+            // No need to check inside loop anymore as we pre-allocated, 
+            // but keeping a safety just in case of future logic changes
+            if (instanceIndex >= this.capacity) break; 
 
             const { char, x: gx, y: gy, z: gz } = glyph;
             dummy.scale.set(char.width * scale, char.height * scale, 1);
