@@ -12,6 +12,15 @@ export class NoteBox {
     public bodyArea: TextArea;
     public position: THREE.Vector3 = new THREE.Vector3();
     
+    // Style Properties
+    public headerColor1: THREE.Color = new THREE.Color(0x00d4ff);
+    public headerColor2: THREE.Color = new THREE.Color(0x00d4ff);
+    public headerAlpha: number = 1.0;
+
+    public bodyColor1: THREE.Color = new THREE.Color(0x0a1012);
+    public bodyColor2: THREE.Color = new THREE.Color(0x0a1012);
+    public bodyAlpha: number = 0.9;
+
     private boxManager: BoxManager;
     private headerId: number;
     private bodyId: number;
@@ -24,23 +33,16 @@ export class NoteBox {
         if (!textManager.fontData) throw new Error("Font data must be loaded first");
         
         this.boxManager = boxManager;
-        
-        // Initialize layout engines
         this.titleArea = new TextArea(textManager.fontData);
         this.bodyArea = new TextArea(textManager.fontData);
         
-        // Register boxes with manager
-        // We initialize with dummy values, setSize will update them
-        // Initialize with Blue Minimalist Theme
-        this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), new THREE.Color(0x00d4ff)); // Accent Blue
-        this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), new THREE.Color(0x0a1012)); // Deep Navy/Black
+        // Initialize with default values
+        this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.headerColor1, this.headerColor2, this.headerAlpha);
+        this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.bodyColor1, this.bodyColor2, this.bodyAlpha);
 
         this.updateGeometry();
     }
 
-    /**
-     * Updates the sizes and positions of the background meshes.
-     */
     setSize(w: number, h: number, headerH: number = 1.2) {
         this.width = w;
         this.height = h;
@@ -49,18 +51,18 @@ export class NoteBox {
     }
 
     private updateGeometry() {
-        // Calculate world positions based on this.position
-        
-        // Header: Using accent blue
+        // Header
         const headerPos = this.position.clone().add(new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01));
-        this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), new THREE.Color(0x00d4ff));
+        this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), 
+            this.headerColor1, this.headerColor2, this.headerAlpha);
 
-        // Body: Using deep dark theme
+        // Body
         const bodyH = this.height - this.headerHeight;
         const bodyY = -(this.headerHeight + bodyH / 2);
         const bodyPos = this.position.clone().add(new THREE.Vector3(this.width / 2, bodyY, 0));
         
-        this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), new THREE.Color(0x0a1012));
+        this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), 
+            this.bodyColor1, this.bodyColor2, this.bodyAlpha);
     }
 
     setPosition(x: number, y: number, z: number) {
@@ -68,23 +70,40 @@ export class NoteBox {
         this.updateGeometry();
     }
 
-    /**
-     * Helper to get total glyphs for rendering
-     */
+    setStyle(config: {
+        headerColor1?: number | THREE.Color,
+        headerColor2?: number | THREE.Color,
+        headerAlpha?: number,
+        bodyColor1?: number | THREE.Color,
+        bodyColor2?: number | THREE.Color,
+        bodyAlpha?: number
+    }) {
+        if (config.headerColor1 !== undefined) this.headerColor1 = this.toColor(config.headerColor1);
+        if (config.headerColor2 !== undefined) this.headerColor2 = this.toColor(config.headerColor2);
+        if (config.headerAlpha !== undefined) this.headerAlpha = config.headerAlpha;
+
+        if (config.bodyColor1 !== undefined) this.bodyColor1 = this.toColor(config.bodyColor1);
+        if (config.bodyColor2 !== undefined) this.bodyColor2 = this.toColor(config.bodyColor2);
+        if (config.bodyAlpha !== undefined) this.bodyAlpha = config.bodyAlpha;
+
+        this.updateGeometry();
+    }
+
+    private toColor(c: number | THREE.Color): THREE.Color {
+        return c instanceof THREE.Color ? c : new THREE.Color(c);
+    }
+
     getLayout(textScale: number) {
-        // Map world units to font pixels for wrapping
         this.titleArea.width = (this.width - 0.5) / textScale;
         this.titleArea.height = (this.headerHeight - 0.1) / textScale;
         
         this.bodyArea.width = (this.width - 0.5) / textScale;
         this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
 
-        // Calculate World Offsets in Font Space
         const worldOffsetX = this.position.x / textScale;
         const worldOffsetY = this.position.y / textScale;
         const worldOffsetZ = this.position.z;
 
-        // Title Centering: Center the first line vertically within the header
         const fontLineHeight = this.titleArea.fontData.common.lineHeight;
         const headerHeightFont = this.headerHeight / textScale;
         const titleVertOffset = (headerHeightFont - fontLineHeight) / 2;
@@ -96,7 +115,7 @@ export class NoteBox {
             z: worldOffsetZ
         }));
 
-        const bodyPadding = 0.2; // World Text Padding
+        const bodyPadding = 0.2;
         const bodyVertOffset = (this.headerHeight + bodyPadding) / textScale;
 
         const bodyGlyphs = this.bodyArea.computeLayout().map(g => ({

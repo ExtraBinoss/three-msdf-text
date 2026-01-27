@@ -81,27 +81,39 @@ const initExhibit = (id: string) => {
     if (id === 'showcase') {
         const hero = new NoteBox(textManager, boxManager);
         hero.setPosition(-7, 5, 0);
-        hero.setSize(14, 4.5, 1.0); // Fixed headerHeight from 0.1 to 1.0
-        hero.titleArea.text = "MSDF EFFECTS";
-        hero.bodyArea.text = "Per-character control with unlimited scaling";
+        hero.setSize(14, 2.5, 1.0);
+        hero.titleArea.text = "STYLING ENGINE";
+        hero.bodyArea.text = "Independent control over transparency, colors, and gradients.";
+        // Glass-morphic Hero
+        hero.setStyle({
+            headerColor1: 0x00d4ff, headerColor2: 0x0080ff, headerAlpha: 0.8,
+            bodyColor1: 0x050505, bodyAlpha: 0.3 // Very transparent body
+        });
         noteBoxes.push(hero);
 
         const secondary = new NoteBox(textManager, boxManager);
         secondary.setPosition(-10, 0, 0);
-        secondary.setSize(9, 6, 1.2);
+        secondary.setSize(9, 6.5, 1.2);
         secondary.titleArea.text = "STABLE GRADIENTS";
-        secondary.bodyArea.text = "Resizing the box below will not cause the colors to bleed or slide. " +
-                                  "The engine keeps styling data anchored to the content indices.";
+        secondary.bodyArea.text = "The background boxes now support vertical gradients and per-instance alpha blending.";
+        secondary.setStyle({
+            bodyColor1: 0x0a1012, bodyColor2: 0x1a2a32, bodyAlpha: 0.95
+        });
         noteBoxes.push(secondary);
 
         const hacker = new NoteBox(textManager, boxManager);
         hacker.setPosition(1, 0, 0);
-        hacker.setSize(9, 6, 1.2);
-        hacker.titleArea.text = "HACKER DECODE";
-        hacker.bodyArea.text = "Decrypting secret data... \n\n" +
-                               "0x7F4A2B9C1D\n" +
-                               "STATUS: UNKNOWN\n" +
-                               "ACCESS: DENIED";
+        hacker.setSize(9, 6.5, 1.2);
+        hacker.titleArea.text = "TERMINAL GLITCH";
+        hacker.bodyArea.text = "Testing independent background alpha...\n\n" +
+                               "NODE: 0xDE77\n" +
+                               "SYNC: ACTIVE\n" +
+                               "ENCRYPTION: HIGH";
+        // Dark Terminal Theme with subtle gradient
+        hacker.setStyle({
+            headerColor1: 0x00ff00, headerColor2: 0x008800,
+            bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
+        });
         noteBoxes.push(hacker);
 
     } else if (id === 'notebox') {
