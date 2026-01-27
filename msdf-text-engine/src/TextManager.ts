@@ -12,28 +12,26 @@ export class TextManager {
     private geometry: THREE.PlaneGeometry;
     private material: THREE.ShaderMaterial;
     private charMap: Map<string, Char> = new Map();
-    private maxChars: number;
+    private capacity: number;
+    private scene: THREE.Scene;
     public textScale: number = 0.01;
     public fontData: FontData | null = null;
     private _profileData = {
-        lastUpdateDuration: 0
+        lastUpdateDuration: 0,
+        growthCount: 0
     };
 
     /**
-     * Creates a new TextManager instance.
+     * Creates a new TextManager instance with dynamic buffer growth.
      * @param scene The Three.js scene to add the mesh to.
-     * @param maxChars Maximum number of characters that can be displayed (buffer size). Defaults to 1000.
+     * @param initialCapacity Initial buffer size. Defaults to 100 and grows as needed.
      */
-    constructor(scene: THREE.Scene, maxChars: number = 1000) {
-        this.maxChars = maxChars;
+    constructor(scene: THREE.Scene, initialCapacity: number = 100) {
+        this.scene = scene;
+        this.capacity = initialCapacity;
 
         // 1. Geometry
         this.geometry = new THREE.PlaneGeometry(1, 1);
-        
-        // 2. Custom Attributes (aUvOffset)
-        // [u, v, width, height]
-        const uvOffsetAttribute = new THREE.InstancedBufferAttribute(new Float32Array(maxChars * 4), 4);
-        this.geometry.setAttribute('aUvOffset', uvOffsetAttribute);
 
         // 3. Material
         this.material = new THREE.ShaderMaterial({
@@ -48,12 +46,86 @@ export class TextManager {
             depthTest: false // Optional, depends on use case
         });
 
-        // InstancedMesh
-        this.mesh = new THREE.InstancedMesh(this.geometry, this.material, maxChars);
-        this.mesh.count = 0; // Start with 0 visible
-        this.mesh.frustumCulled = false; // Phase 5 optimization
-        
+        // Initialize mesh with initial capacity
+        this.mesh = this.createMesh(this.capacity);
         scene.add(this.mesh);
+    }
+
+    /**
+     * Creates a new InstancedMesh with the specified capacity.
+     * Used for initial creation and dynamic growth.
+     */
+    private createMesh(capacity: number): THREE.InstancedMesh {
+        const geometry = this.geometry.clone();
+        
+        // Custom Attributes (aUvOffset)
+        const uvOffsetAttribute = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
+        geometry.setAttribute('aUvOffset', uvOffsetAttribute);
+
+        const mesh = new THREE.InstancedMesh(geometry, this.material, capacity);
+        mesh.count = 0;
+        mesh.frustumCulled = false;
+        
+        return mesh;
+    }
+
+    /**
+     * Grows the buffer capacity by recreating the InstancedMesh.
+     * Preserves existing instance data.
+     */
+    private grow(requiredCapacity: number) {
+        // Double capacity until we can fit the required amount
+        let newCapacity = this.capacity * 2;
+        while (newCapacity < requiredCapacity) {
+            newCapacity *= 2;
+        }
+
+        const oldMesh = this.mesh;
+        const oldCount = oldMesh.count;
+        
+        // Create new mesh with larger capacity
+        const newMesh = this.createMesh(newCapacity);
+        
+        // Copy existing instance data
+        if (oldCount > 0) {
+            const oldUvAttr = oldMesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+            const newUvAttr = newMesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+            
+            // Copy matrices
+            for (let i = 0; i < oldCount; i++) {
+                const matrix = new THREE.Matrix4();
+                oldMesh.getMatrixAt(i, matrix);
+                newMesh.setMatrixAt(i, matrix);
+                
+                // Copy UV data
+                newUvAttr.setXYZW(
+                    i,
+                    oldUvAttr.getX(i),
+                    oldUvAttr.getY(i),
+                    oldUvAttr.getZ(i),
+                    oldUvAttr.getW(i)
+                );
+            }
+            
+            newMesh.count = oldCount;
+            newMesh.instanceMatrix.needsUpdate = true;
+            newUvAttr.needsUpdate = true;
+        }
+
+        // Replace in scene
+        this.scene.remove(oldMesh);
+        this.scene.add(newMesh);
+        
+        // Dispose old resources
+        oldMesh.geometry.dispose();
+        
+        // Update references
+        this.mesh = newMesh;
+        this.geometry = newMesh.geometry as THREE.PlaneGeometry;
+        this.capacity = newCapacity;
+        this._profileData.growthCount++;
+        
+        console.log(`TextManager grew to ${newCapacity} instances (growth #${this._profileData.growthCount})`);
     }
 
     /**
@@ -130,7 +202,10 @@ export class TextManager {
                  continue;
             }
 
-            if (instanceIndex >= this.maxChars) break;
+            // Grow buffer if needed
+            if (instanceIndex >= this.capacity) {
+                this.grow(instanceIndex + 100); // Grow with some headroom
+            }
 
             // Calculate position
             // Font JSON glyphs have xoffset, yoffset.
@@ -202,7 +277,10 @@ export class TextManager {
         const scale = this.textScale; // Use textScale for local glyph scaling
 
         for (const glyph of glyphs) {
-            if (instanceIndex >= this.maxChars) break;
+            // Grow buffer if needed
+            if (instanceIndex >= this.capacity) {
+                this.grow(instanceIndex + 100); // Grow with some headroom
+            }
 
             const { char, x: gx, y: gy, z: gz } = glyph;
             dummy.scale.set(char.width * scale, char.height * scale, 1);
@@ -242,10 +320,11 @@ export class TextManager {
     getProfile() {
         return {
             visibleCharacters: this.mesh.count,
-            bufferCapacity: this.maxChars,
+            bufferCapacity: this.capacity,
             geometryVertices: this.mesh.count * 4,
             geometryTriangles: this.mesh.count * 2,
-            lastUpdateDuration: this._profileData.lastUpdateDuration
+            lastUpdateDuration: this._profileData.lastUpdateDuration,
+            growthCount: this._profileData.growthCount
         };
     }
 }

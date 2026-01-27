@@ -22,7 +22,7 @@ controls.target.set(4, -2, 0)
 
 // Managers
 const boxManager = new BoxManager(scene, 100);
-const textManager = new TextManager(scene, 5000);
+const textManager = new TextManager(scene);
 
 textManager.load('/font.json', '/font.png').then(() => {
     // We store references to simulate resize
