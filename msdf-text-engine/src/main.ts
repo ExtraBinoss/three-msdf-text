@@ -2,7 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TextManager } from './TextManager.ts'
-import { TextArea } from './TextArea.ts'
+import { NoteBox } from './NoteBox.ts'
 
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x1a1a1a) // Dark grey
@@ -17,25 +17,25 @@ document.body.appendChild(renderer.domElement)
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
-controls.target.set(4, 0, 0)
+controls.target.set(4, -2, 0)
 
 // Text Manager
 const textManager = new TextManager(scene, 5000)
 textManager.load('/font.json', '/font.png').then(() => {
-    if (!textManager.fontData) return;
+    // Create Note Box
+    const note = new NoteBox(textManager);
+    note.setSize(10, 8, 1.2);
+    note.group.position.set(0, 0, 0);
+    scene.add(note.group);
 
-    // Create a Text Area
-    const textArea = new TextArea(textManager.fontData);
-    textArea.width = 1200; // Pixels in font-space
-    textArea.height = 800;
-    textArea.text = 
-        "TEXT AREA ENGINE\n\n" +
-        "This is an agnostic TextArea layout engine. It handles word wrapping automatically based on the width property. " +
-        "Try changing the width and the text will reflow accordingly.\n\n" +
-        "It splits words using regex, calculates widths using the charMap, and returns a list of glyph positions. " +
-        "The renderer then converts these into world-space instances.";
-    
-    textManager.renderTextArea(textArea);
+    note.titleArea.text = "NOTELOG v1.0";
+    note.bodyArea.text = "This is a NoteBox component.\n\n" +
+                         "It features a dedicated Title Bar and a main body area with automatic word wrapping. " +
+                         "The geometry is handled by standard Three.js planes, while the text is batched into " +
+                         "the master InstancedMesh for maximum performance.";
+
+    // Render text to the manager
+    textManager.renderGlyphs(note.getLayout(textManager.textScale));
 }).catch(err => {
     console.error('Failed to load font:', err)
 })

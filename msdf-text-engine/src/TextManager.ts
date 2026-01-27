@@ -184,13 +184,11 @@ export class TextManager {
     }
 
     /**
-     * Renders a TextArea layout.
-     * @param textArea The TextArea instance to render.
+     * Renders a custom list of glyphs at specific offsets.
+     * Useful for complex UI components like NoteBoxes.
      */
-    renderTextArea(textArea: any) { // using any to avoid circular if not careful, or import type
-        const glyphs = textArea.computeLayout();
+    renderGlyphs(glyphs: any[], worldOffset: THREE.Vector3 = new THREE.Vector3()) {
         const startTime = performance.now();
-        
         let instanceIndex = 0;
         const dummy = new THREE.Object3D();
         const uvOffsetAttribute = this.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
@@ -203,23 +201,18 @@ export class TextManager {
             if (instanceIndex >= this.maxChars) break;
 
             const { char, x: gx, y: gy } = glyph;
-            
             dummy.scale.set(char.width * scale, char.height * scale, 1);
             
-            // Align based on layout coordinates
-            const posX = (gx + char.xoffset + char.width / 2) * scale;
-            const posY = (gy - char.yoffset - char.height / 2) * scale;
+            const posX = worldOffset.x + (gx + char.xoffset + char.width / 2) * scale;
+            const posY = worldOffset.y + (gy - char.yoffset - char.height / 2) * scale;
             
-            dummy.position.set(posX, posY, 0);
+            dummy.position.set(posX, posY, worldOffset.z + 0.02); // Slightly front
             dummy.updateMatrix();
             this.mesh.setMatrixAt(instanceIndex, dummy.matrix);
 
-            // UVs
             const u = char.x / scaleW;
             const v = 1.0 - (char.y + char.height) / scaleH;
-            const w = char.width / scaleW;
-            const h = char.height / scaleH;
-            uvOffsetAttribute.setXYZW(instanceIndex, u, v, w, h);
+            uvOffsetAttribute.setXYZW(instanceIndex, u, v, char.width / scaleW, char.height / scaleH);
 
             instanceIndex++;
         }
@@ -232,7 +225,6 @@ export class TextManager {
 
     /**
      * Returns profiling and status information about the text engine.
-     * Useful for performance monitoring and debugging.
      */
     getProfile() {
         return {
