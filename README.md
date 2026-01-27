@@ -18,6 +18,8 @@ A ultra-high-performance, professional-grade text rendering engine for Three.js.
 
 ---
 
+> **_NOTE:_** For importing your own font, you will need to create your atlas of msdf, as this is not included in the library. You could do it via [Three-BMFont-text](https://www.npmjs.com/package/three-bmfont-text) or the online website by [Don McCurdy](https://msdf-bmfont.donmccurdy.com/)
+
 ## ⚙️ Technical Pillars
 
 ### 1. Multi-channel Signed Distance Fields (MSDF)
