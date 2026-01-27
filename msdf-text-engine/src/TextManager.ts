@@ -14,6 +14,7 @@ export class TextManager {
     private fontData: FontData | null = null;
     private charMap: Map<string, Char> = new Map();
     private maxChars: number;
+    public textScale: number = 0.01;
     private _profileData = {
         lastUpdateDuration: 0
     };
@@ -144,8 +145,7 @@ export class TextManager {
             // We might need to invert Y.
 
             // Let's assume we map 1 unit = 1 pixel for now, or scale down.
-            // Scale:
-            const scale = 0.01; // Scale down for view
+            const scale = this.textScale;
             
             dummy.scale.set(charData.width * scale, charData.height * scale, 1);
             
@@ -160,21 +160,6 @@ export class TextManager {
             dummy.updateMatrix();
             
             this.mesh.setMatrixAt(instanceIndex, dummy.matrix);
-
-            // Update UV Offsets
-            // [u, v, width, height]
-            // u = x / scaleW
-            // v = 1.0 - (charData.y + charData.height) / scaleH  (if texture is flipped?)
-            // Usually standard UVs: (0,0) is bottom-left in WebGL.
-            // Texture atlas: (0,0) is top-left in most image formats?
-            // MSDF generation usually outputs image where (0,0) is top-left.
-            // So v needs to be inverted if WebGL uploads it bottom-up or if we access it that way.
-            // BMFont y is from top.
-            // Let's stick to standard BMFont logic:
-            // u = charData.x / scaleW
-            // v = 1.0 - (charData.y + charData.height) / scaleH
-            // width = charData.width / scaleW
-            // height = charData.height / scaleH
             
             const u = charData.x / scaleW;
             const v = 1.0 - (charData.y + charData.height) / scaleH; // Invert V

@@ -13,6 +13,11 @@ const textManager = new TextManager(scene: THREE.Scene, maxChars: number = 1000)
 -   **scene**: The Three.js scene where the text mesh will be added.
 -   **maxChars**: The maximum number of characters that can be displayed at once. This sets the size of the instance buffer. Default is `1000`.
 
+### Properties
+
+#### `textScale: number`
+Controls the overall size of the rendered text. Maps pixel-based font metrics to world units. Default is `0.01`.
+
 ### Methods
 
 #### `load(fontUrl: string, textureUrl: string): Promise<void>`
