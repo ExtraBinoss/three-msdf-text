@@ -51,6 +51,23 @@ export class TextEffects {
         area.styles.push({ start, end, color });
     }
 
+    /**
+     * Randomly scrambles a range of characters in a TextArea (Hacker effect)
+     * Note: This modifies the source text of the area.
+     */
+    applyScramble(area: TextArea, start: number, end: number, probability: number = 0.5) {
+        const chars = area.text.split('');
+        const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+        
+        for (let i = start; i < Math.min(end, chars.length); i++) {
+            if (chars[i] === ' ' || chars[i] === '\n') continue;
+            if (Math.random() < probability) {
+                chars[i] = glyphs[Math.floor(Math.random() * glyphs.length)];
+            }
+        }
+        area.text = chars.join('');
+    }
+
     update(deltaTime: number = 0.016) {
         this.time += deltaTime;
     }

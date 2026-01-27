@@ -4,10 +4,38 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>msdf-text-engine</title>
+    <title>MSDF Text Engine | Premium Playground</title>
   </head>
   <body>
-    <div id="app"></div>
+    <!-- Premium UI Overlay -->
+    <div id="ui-overlay">
+      <div class="header">
+        <h1>MSDF Text Lib</h1>
+        <p>High-Performance Vector Text</p>
+      </div>
+      
+      <div class="section">
+        <span class="section-title">Projection</span>
+        <div class="toggle-group">
+          <button id="btn-2d" class="active">2D View</button>
+          <button id="btn-3d">3D View</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <span class="section-title">Exhibits</span>
+        <button id="ex-showcase" class="active">Showcase</button>
+        <button id="ex-notebox">NoteBox Layouts</button>
+        <button id="ex-stress">Turbo Mode [10k]</button>
+      </div>
+    </div>
+
+    <!-- Stats Panel (Top Right) -->
+    <div id="stats" class="stats-panel"></div>
+
+    <!-- Instructions -->
+    <div id="instructions">Right click to Pan • Scroll to Zoom</div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

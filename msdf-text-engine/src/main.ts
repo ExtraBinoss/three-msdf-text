@@ -5,136 +5,247 @@ import { TextManager } from './TextManager.ts'
 import { TextEffects } from './TextEffects.ts'
 import { NoteBox } from './NoteBox.ts'
 import { BoxManager } from './BoxManager.ts'
+import { TextArea } from './TextArea.ts'
+
+/**
+ * MSDF TEXT ENGINE - MINIMALIST TURBO PLAYGROUND
+ */
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x1a1a1a) // Dark grey
+scene.background = new THREE.Color(0x050505)
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.set(0, 4, 15)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
+camera.position.set(0, 0, 15)
 
-const renderer = new THREE.WebGLRenderer({ antialias: true })
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 document.body.appendChild(renderer.domElement)
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
-controls.target.set(4, -2, 0)
+controls.enableRotate = false;
+controls.mouseButtons = {
+    LEFT: null,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.PAN
+}
 
-// Managers
-const boxManager = new BoxManager(scene, 100);
+// Global Managers
+const boxManager = new BoxManager(scene, 2000);
 const textManager = new TextManager(scene);
 const textEffects = new TextEffects();
 
-textManager.load('/font.json', '/font.png').then(() => {
-    // We store references to simulate resize
-    const note = new NoteBox(textManager, boxManager);
-    note.setSize(10, 8, 1.2);
-    note.setPosition(0, 0, 0);
-    note.titleArea.text = "NOTELOG v1.0";
-    note.bodyArea.text = "This is a NoteBox component.\n\n" +
-                         "It features a dedicated Title Bar and a main body area with automatic word wrapping. " +
-                         "The geometry is handled by standard Three.js planes, while the text is batched into " +
-                         "the master InstancedMesh for maximum performance.\n\n" +
-                         "Try resizing this box! The text will automatically reflow and hide if it overflows.";
+// State
+let currentExhibit = 'showcase';
+const clock = new THREE.Clock();
+const noteBoxes: NoteBox[] = [];
+const stressAreas: TextArea[] = [];
 
-    const note2 = new NoteBox(textManager, boxManager);
-    note2.setSize(8, 6, 1.2);
-    note2.setPosition(12, 1, -2);
-    note2.titleArea.text = "TEXT EFFECTS";
-    note2.bodyArea.text = "Rainbow mode active!\n" +
-                          "Gradient colors below:\n" +
-                          "AMAZING EFFECTS\n" +
-                          "Per-character control!";
-
-    // Simulation Loop for Resize
-    let time = 0;
-    let lastTime = performance.now();
+const set3D = (enabled: boolean) => {
+    controls.enableRotate = enabled;
+    controls.mouseButtons = {
+        LEFT: enabled ? THREE.MOUSE.ROTATE : null,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.PAN
+    };
     
-    function updateLayouts() {
-        const currentTime = performance.now();
-        const deltaTime = (currentTime - lastTime) / 1000;
-        lastTime = currentTime;
-        
-        time += 0.05;
-        // Oscillate width and height
-        const newW = 10 + Math.sin(time) * 3;
-        const newH = 8 + Math.cos(time * 0.7) * 2;
-        
-        note.setSize(newW, newH, 1.2);
-        
-        // Update effect timer
-        textEffects.update(deltaTime);
-
-        // Apply effects directly to the Areas (STABLE!)
-        // Note 1 Title Gradient
-        textEffects.applyGradient(note.titleArea, 0, note.titleArea.text.length, [
-            new THREE.Color(0x00d4ff),
-            new THREE.Color(0xff00ff)
-        ]);
-
-        // Note 2 Title Rainbow
-        textEffects.updateRainbow(note2.titleArea, 0, note2.titleArea.text.length, 0.5);
-
-        // Note 2 "AMAZING EFFECTS" Gradient in body
-        const bodyText = note2.bodyArea.text;
-        const amazingStart = bodyText.indexOf('AMAZING');
-        if (amazingStart !== -1) {
-            textEffects.applyGradient(note2.bodyArea, amazingStart, amazingStart + 'AMAZING EFFECTS'.length, [
-                new THREE.Color(0xff0080),
-                new THREE.Color(0x00ffff),
-                new THREE.Color(0x80ff00)
-            ]);
-        }
-        
-        // Re-calculate layouts (now includes colors!)
-        const layouts = [
-            ...note.getLayout(textManager.textScale),
-            ...note2.getLayout(textManager.textScale)
-        ];
-        
-        textManager.renderGlyphs(layouts);
-        
-        requestAnimationFrame(updateLayouts);
+    document.getElementById('btn-2d')?.classList.toggle('active', !enabled);
+    document.getElementById('btn-3d')?.classList.toggle('active', enabled);
+    
+    if (!enabled) {
+        camera.position.set(0, 0, 15);
+        controls.target.set(0, 0, 0);
     }
-    updateLayouts();
+};
 
-}).catch(err => {
-    console.error('Failed to load font:', err)
-})
+const setExhibit = (id: string) => {
+    currentExhibit = id;
+    ['ex-showcase', 'ex-notebox', 'ex-stress'].forEach(eid => {
+        document.getElementById(eid)?.classList.toggle('active', eid === `ex-${id}`);
+    });
+    initExhibit(id);
+};
 
-// Resize handler
+const clearScene = () => {
+    boxManager.clear();
+    noteBoxes.length = 0;
+    stressAreas.length = 0;
+};
+
+const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
+
+const initExhibit = (id: string) => {
+    clearScene();
+    
+    if (id === 'showcase') {
+        const hero = new NoteBox(textManager, boxManager);
+        hero.setPosition(-7, 5, 0);
+        hero.setSize(14, 4.5, 1.0); // Fixed headerHeight from 0.1 to 1.0
+        hero.titleArea.text = "MSDF EFFECTS";
+        hero.bodyArea.text = "Per-character control with unlimited scaling";
+        noteBoxes.push(hero);
+
+        const secondary = new NoteBox(textManager, boxManager);
+        secondary.setPosition(-10, 0, 0);
+        secondary.setSize(9, 6, 1.2);
+        secondary.titleArea.text = "STABLE GRADIENTS";
+        secondary.bodyArea.text = "Resizing the box below will not cause the colors to bleed or slide. " +
+                                  "The engine keeps styling data anchored to the content indices.";
+        noteBoxes.push(secondary);
+
+        const hacker = new NoteBox(textManager, boxManager);
+        hacker.setPosition(1, 0, 0);
+        hacker.setSize(9, 6, 1.2);
+        hacker.titleArea.text = "HACKER DECODE";
+        hacker.bodyArea.text = "Decrypting secret data... \n\n" +
+                               "0x7F4A2B9C1D\n" +
+                               "STATUS: UNKNOWN\n" +
+                               "ACCESS: DENIED";
+        noteBoxes.push(hacker);
+
+    } else if (id === 'notebox') {
+        for (let i = 0; i < 3; i++) {
+            const nb = new NoteBox(textManager, boxManager);
+            nb.setPosition(-12 + i * 9, 2 - i * 2, i * -1);
+            nb.setSize(8, 6, 1.2);
+            nb.titleArea.text = `BOX MODULE 0${i+1}`;
+            nb.bodyArea.text = `Standard NoteBox component.\n\n` +
+                               `• Auto-clipping\n• Word wrap\n• Header alignment\n• Depth testing`;
+            noteBoxes.push(nb);
+        }
+    } else if (id === 'stress') {
+        // TURBO MODE: Highly concentrated text with random dictionary
+        const grid = 16;
+        const spacing = 15;
+        
+        for (let i = 0; i < grid; i++) {
+            for (let j = 0; j < grid; j++) {
+                const area = new TextArea(textManager.fontData!);
+                area.width = 500;
+                
+                // Build random animal sentence
+                const count = 3 + Math.floor(Math.random() * 5);
+                let sentence = "";
+                for(let k=0; k<count; k++) {
+                    sentence += animals[Math.floor(Math.random() * animals.length)] + " ";
+                }
+                
+                area.text = sentence.trim();
+                area.wordWrap = true;
+                
+                (area as any).worldPos = new THREE.Vector3(
+                    (i - grid/2) * spacing, 
+                    (j - grid/2) * spacing, 
+                    (Math.random() - 0.5) * 10
+                );
+                
+                // Pre-compute layout once for static text positions
+                (area as any).cachedLayout = area.computeLayout();
+                stressAreas.push(area);
+            }
+        }
+    }
+};
+
+const originalHackerText = "Decrypting secret data... \n\n0x7F4A2B9C1D\nSTATUS: UNKNOWN\nACCESS: DENIED";
+
+const setupUI = () => {
+    document.getElementById('btn-2d')?.addEventListener('click', () => set3D(false));
+    document.getElementById('btn-3d')?.addEventListener('click', () => set3D(true));
+    document.getElementById('ex-showcase')?.addEventListener('click', () => setExhibit('showcase'));
+    document.getElementById('ex-notebox')?.addEventListener('click', () => setExhibit('notebox'));
+    document.getElementById('ex-stress')?.addEventListener('click', () => setExhibit('stress'));
+};
+
+textManager.load('/font.json', '/font.png').then(() => {
+    setupUI();
+    setExhibit('showcase');
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const deltaTime = clock.getDelta();
+        const elapsedTime = clock.getElapsedTime();
+
+        controls.update();
+
+        let allLayouts: any[] = [];
+
+        if (currentExhibit === 'showcase' && noteBoxes.length >= 3) {
+            const hero = noteBoxes[0];
+            const secondary = noteBoxes[1];
+            const hacker = noteBoxes[2];
+            
+            textEffects.update(deltaTime);
+            // Hero Rainbow
+            textEffects.updateRainbow(hero.titleArea, 0, hero.titleArea.text.length, 1.0);
+            
+            // Secondary and Hacker titles: Solid black for contrast on blue header
+            textEffects.applyColor(secondary.titleArea, 0, secondary.titleArea.text.length, new THREE.Color(0x000000));
+            textEffects.applyColor(hacker.titleArea, 0, hacker.titleArea.text.length, new THREE.Color(0x000000));
+
+            hacker.bodyArea.text = originalHackerText;
+            textEffects.applyScramble(hacker.bodyArea, 0, hacker.bodyArea.text.length, 0.1);
+            textEffects.applyColor(hacker.bodyArea, 0, hacker.bodyArea.text.length, new THREE.Color(0x00d4ff));
+
+            secondary.setSize(9 + Math.sin(elapsedTime) * 1, 6, 1.2);
+            allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'notebox') {
+            // Apply black titles to all boxes in the notebox exhibit too
+            for (const nb of noteBoxes) {
+                textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, new THREE.Color(0x000000));
+            }
+            allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'stress') {
+            textEffects.update(deltaTime);
+            for (const area of stressAreas) {
+                const pos = (area as any).worldPos;
+                const cachedLayout = (area as any).cachedLayout;
+                
+                // Dynamic effects
+                textEffects.updateRainbow(area, 0, area.text.length, 0.4);
+                
+                // Re-apply colors to cached layout (efficient)
+                for (let k = 0; k < cachedLayout.length; k++) {
+                    const glyph = cachedLayout[k];
+                    // Find the color from area.styles
+                    const style = area.styles.find(s => k >= s.start && k < s.end);
+                    if (style && style.color) glyph.color = style.color;
+                    
+                    const worldX = glyph.x + pos.x / textManager.textScale;
+                    const worldY = glyph.y + pos.y / textManager.textScale;
+                    const worldZ = pos.z;
+                    
+                    allLayouts.push({
+                        char: glyph.char,
+                        x: worldX,
+                        y: worldY,
+                        z: worldZ,
+                        color: glyph.color
+                    });
+                }
+            }
+        }
+
+        textManager.renderGlyphs(allLayouts);
+        renderer.render(scene, camera);
+
+        const profile = textManager.getProfile();
+        const statsEl = document.getElementById('stats');
+        if (statsEl) {
+            statsEl.innerText = 
+                `FPS: ${Math.round(1/deltaTime)}\n` +
+                `INSTANCES: ${profile.visibleCharacters}\n` +
+                `BUFFER: ${profile.bufferCapacity}\n` +
+                `CPU: ${profile.lastUpdateDuration.toFixed(2)}ms\n` +
+                `GL CALLS: ${renderer.info.render.calls}`;
+        }
+    }
+    animate();
+});
+
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
-})
-
-// Stats UI
-const statsContainer = document.createElement('div');
-statsContainer.style.position = 'absolute';
-statsContainer.style.top = '10px';
-statsContainer.style.left = '10px';
-statsContainer.style.color = 'white';
-statsContainer.style.backgroundColor = 'rgba(0,0,0,0.5)';
-statsContainer.style.padding = '8px';
-statsContainer.style.fontFamily = 'monospace';
-statsContainer.style.pointerEvents = 'none';
-document.body.appendChild(statsContainer);
-
-// Animation Loop
-function animate() {
-    requestAnimationFrame(animate)
-    controls.update()
-    renderer.render(scene, camera)
-
-    // Update stats
-    const profile = textManager.getProfile();
-    statsContainer.innerText = 
-        `Draw Calls: ${renderer.info.render.calls}\n` +
-        `Triangles: ${renderer.info.render.triangles}\n` +
-        `Visible Chars: ${profile.visibleCharacters}\n` + 
-        `Update Time: ${profile.lastUpdateDuration.toFixed(2)}ms`;
-}
-
-animate()
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});

@@ -31,8 +31,9 @@ export class NoteBox {
         
         // Register boxes with manager
         // We initialize with dummy values, setSize will update them
-        this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), new THREE.Color(0x444444));
-        this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), new THREE.Color(0x2a2a2a));
+        // Initialize with Blue Minimalist Theme
+        this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), new THREE.Color(0x00d4ff)); // Accent Blue
+        this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), new THREE.Color(0x0a1012)); // Deep Navy/Black
 
         this.updateGeometry();
     }
@@ -50,16 +51,16 @@ export class NoteBox {
     private updateGeometry() {
         // Calculate world positions based on this.position
         
-        // Header
+        // Header: Using accent blue
         const headerPos = this.position.clone().add(new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01));
-        this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), new THREE.Color(0x444444));
+        this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), new THREE.Color(0x00d4ff));
 
-        // Body
+        // Body: Using deep dark theme
         const bodyH = this.height - this.headerHeight;
         const bodyY = -(this.headerHeight + bodyH / 2);
         const bodyPos = this.position.clone().add(new THREE.Vector3(this.width / 2, bodyY, 0));
         
-        this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), new THREE.Color(0x2a2a2a));
+        this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), new THREE.Color(0x0a1012));
     }
 
     setPosition(x: number, y: number, z: number) {

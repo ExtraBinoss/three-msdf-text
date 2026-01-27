@@ -84,4 +84,12 @@ export class BoxManager {
         this.mesh.instanceMatrix.needsUpdate = true;
         if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
     }
+
+    /**
+     * Clears all box instances.
+     */
+    clear() {
+        this.instances = [];
+        this.mesh.count = 0;
+    }
 }
