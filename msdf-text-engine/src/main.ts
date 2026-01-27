@@ -48,6 +48,8 @@ const stressAreas: TextArea[] = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let resizingBox: NoteBox | null = null;
+let draggingBox: NoteBox | null = null;
+let dragOffset = new THREE.Vector3();
 let editingBox: NoteBox | null = null;
 let editingPart: 'header' | 'body' | null = null;
 
@@ -222,6 +224,14 @@ const handleInteraction = () => {
             const newW = Math.max(2, planeIntersect.x - resizingBox.position.x);
             const newH = Math.max(2, -(planeIntersect.y - resizingBox.position.y));
             resizingBox.setSize(newW, newH);
+        } else if (draggingBox) {
+            raycaster.setFromCamera(mouse, camera);
+            const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -draggingBox.position.z);
+            const planeIntersect = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, planeIntersect);
+            
+            const newPos = planeIntersect.sub(dragOffset);
+            draggingBox.setPosition(newPos.x, newPos.y, newPos.z);
         }
     });
 
@@ -231,14 +241,19 @@ const handleInteraction = () => {
         const intersects = raycaster.intersectObject(mesh);
         
         if (intersects.length > 0) {
-            const instanceId = intersects[0].instanceId!;
+            const hit = intersects[0];
+            const instanceId = hit.instanceId!;
             const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
             
-            // Handle Focus & Blur
+            // Handle Focus & Interaction
             if (box) {
                 const part = box.getPart(instanceId);
                 if (part === 'resize') {
                     resizingBox = box;
+                    controls.enabled = false;
+                } else if (part === 'header' || part === 'body') {
+                    draggingBox = box;
+                    dragOffset.copy(hit.point).sub(box.position);
                     controls.enabled = false;
                 }
             } else {
@@ -257,6 +272,7 @@ const handleInteraction = () => {
 
     window.addEventListener('mouseup', () => {
         resizingBox = null;
+        draggingBox = null;
         controls.enabled = true;
     });
 
