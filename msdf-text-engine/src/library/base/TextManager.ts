@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { FontData, Char } from '../font/FontData.ts';
+import { TextArea } from '../noteBoxes/TextArea';
 import msdfVert from '../shaders/msdf.vert?raw';
 import msdfFrag from '../shaders/msdf.frag?raw';
 
@@ -375,5 +376,17 @@ export class TextManager {
             lastUpdateDuration: this._profileData.lastUpdateDuration,
             growthCount: this._profileData.growthCount
         };
+    }
+
+    /**
+     * Factory: Creates and registers a new TextArea.
+     */
+    createTextArea(text: string = "", x: number = 0, y: number = 0, z: number = 0): TextArea {
+        if (!this.fontData) throw new Error("Font data must be loaded first");
+        const area = new TextArea(this.fontData);
+        area.text = text;
+        area.position.set(x, y, z);
+        this.add(area);
+        return area;
     }
 }

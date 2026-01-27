@@ -60,6 +60,7 @@ export class NoteBox extends THREE.Object3D {
         this.resizeHandleId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(0.5, 0.5, 1), new THREE.Color(0xffffff), new THREE.Color(0x888888), 1.0, GradientMode.RADIAL);
 
         this.updateGeometry();
+        this.textManager.add(this);
     }
 
     // Helper to identify which part was hit

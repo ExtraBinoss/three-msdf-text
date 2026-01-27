@@ -266,4 +266,53 @@ export class TextArea extends THREE.Object3D {
             };
         });
     }
+
+    // --- Fluent API Helpers ---
+
+    /** Sets the position of the text area. Chainable. */
+    setPos(x: number, y: number, z: number): this {
+        this.position.set(x, y, z);
+        return this;
+    }
+
+    /** Sets the z-rotation (in radians) of the text area. Chainable. */
+    setRot(radians: number): this {
+        this.rotation.z = radians;
+        return this;
+    }
+
+    /** Sets the scale of the text area. Chainable. */
+    setScale(s: number): this {
+        this.scale.set(s, s, s);
+        return this;
+    }
+
+    /** Sets the default text color. Chainable. */
+    setColor(hexOrColor: number | string | THREE.Color): this {
+        if (hexOrColor instanceof THREE.Color) {
+            this.defaultColor.copy(hexOrColor);
+        } else {
+            this.defaultColor.set(hexOrColor);
+        }
+        return this;
+    }
+
+    /** Sets the bounding box dimensions. Chainable. */
+    setBoxSize(width: number, height: number): this {
+        this.width = width;
+        this.height = height;
+        return this;
+    }
+
+    /** Adds a style range to the text. Chainable. */
+    addStyle(start: number, end: number, style: Partial<Omit<TextStyle, 'start' | 'end'>>): this {
+        this.styles.push({ start, end, ...style });
+        return this;
+    }
+
+    /** Sets whether word wrapping is enabled. Chainable. */
+    setWordWrap(enabled: boolean): this {
+        this.wordWrap = enabled;
+        return this;
+    }
 }

@@ -55,7 +55,6 @@ export class ExhibitManager {
                 headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
                 bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,
             });
-            this.textManager.add(corp1);
             this.noteBoxMap.set(corp1.name, corp1);
 
             const placeholderBox = new NoteBox(this.textManager, this.boxManager, "placeholder-demo");
@@ -69,7 +68,6 @@ export class ExhibitManager {
                 headerColor1: 0x1e293b,
                 bodyColor1: 0x020617, bodyAlpha: 0.95
             });
-            this.textManager.add(placeholderBox);
             this.noteBoxMap.set(placeholderBox.name, placeholderBox);
 
             const simple = new NoteBox(this.textManager, this.boxManager, "simple");
@@ -82,7 +80,6 @@ export class ExhibitManager {
                 bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
                 bodyAlpha: 1.0
             });
-            this.textManager.add(simple);
             this.noteBoxMap.set(simple.name, simple);
 
             const palette = new NoteBox(this.textManager, this.boxManager, "palette");
@@ -98,7 +95,6 @@ export class ExhibitManager {
                  headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
                  bodyColor1: 0x18181b, bodyAlpha: 1.0
             });
-            this.textManager.add(palette);
             this.noteBoxMap.set(palette.name, palette);
         } else if (id === 'showcase') {
             const hero = new NoteBox(this.textManager, this.boxManager, "hero");
@@ -110,7 +106,6 @@ export class ExhibitManager {
                 headerColor1: 0x444444, headerColor2: 0x333333,
                 bodyColor1: 0x222222, bodyAlpha: 0.95
             });
-            this.textManager.add(hero);
             this.noteBoxMap.set(hero.name, hero);
 
             const secondary = new NoteBox(this.textManager, this.boxManager, "secondary");
@@ -123,7 +118,6 @@ export class ExhibitManager {
                 bodyColor1: 0x1a2a32, bodyColor2: 0x0a1012, bodyGradientMode: GradientMode.VERTICAL,
                 bodyAlpha: 0.95
             });
-            this.textManager.add(secondary);
             this.noteBoxMap.set(secondary.name, secondary);
 
             const hacker = new NoteBox(this.textManager, this.boxManager, "hacker");
@@ -135,7 +129,6 @@ export class ExhibitManager {
                 headerColor1: 0x00ff00, headerColor2: 0x008800,
                 bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
             });
-            this.textManager.add(hacker);
             this.noteBoxMap.set(hacker.name, hacker);
 
             const kinetic = new NoteBox(this.textManager, this.boxManager, "kinetic");
@@ -147,7 +140,6 @@ export class ExhibitManager {
                 headerColor1: 0xff0088, headerColor2: 0xff00ff,
                 bodyColor1: 0x220022, bodyAlpha: 0.9
             });
-            this.textManager.add(kinetic);
             this.noteBoxMap.set(kinetic.name, kinetic);
 
             const glitch = new NoteBox(this.textManager, this.boxManager, "glitch");
@@ -159,7 +151,6 @@ export class ExhibitManager {
                 headerColor1: 0xff3300, headerColor2: 0x330000,
                 bodyColor1: 0x110000, bodyAlpha: 0.95
             });
-            this.textManager.add(glitch);
             this.noteBoxMap.set(glitch.name, glitch);
 
             const pulse = new NoteBox(this.textManager, this.boxManager, "pulse");
@@ -171,7 +162,6 @@ export class ExhibitManager {
                 headerColor1: 0x00ffcc, headerColor2: 0x0066aa,
                 bodyColor1: 0x001a1a, bodyAlpha: 0.9
             });
-            this.textManager.add(pulse);
             this.noteBoxMap.set(pulse.name, pulse);
 
             const wave = new NoteBox(this.textManager, this.boxManager, "wave");
@@ -183,7 +173,6 @@ export class ExhibitManager {
                 headerColor1: 0x0088ff, headerColor2: 0x003366,
                 bodyColor1: 0x000a1a, bodyAlpha: 0.9
             });
-            this.textManager.add(wave);
             this.noteBoxMap.set(wave.name, wave);
 
             const shake = new NoteBox(this.textManager, this.boxManager, "shake");
@@ -195,7 +184,6 @@ export class ExhibitManager {
                 headerColor1: 0xffaa00,
                 bodyColor1: 0x221100, bodyAlpha: 0.95
             });
-            this.textManager.add(shake);
             this.noteBoxMap.set(shake.name, shake);
 
             const typewriter = new NoteBox(this.textManager, this.boxManager, "typewriter");
@@ -207,7 +195,6 @@ export class ExhibitManager {
                 headerColor1: 0x00ff00, headerColor2: 0x004400,
                 bodyColor1: 0x001100, bodyAlpha: 0.9
             });
-            this.textManager.add(typewriter);
             this.noteBoxMap.set(typewriter.name, typewriter);
 
         } else if (id === 'notebox') {
@@ -217,7 +204,6 @@ export class ExhibitManager {
                 nb.setSize(8, 6);
                 nb.titleArea.text = `BOX ${i+1}`;
                 nb.bodyArea.text = `Real-time text editing enabled.\n\nDouble click to focus.`;
-                this.textManager.add(nb);
                 this.noteBoxMap.set(nb.name, nb);
             }
         } else if (id === 'stress') {
@@ -225,15 +211,15 @@ export class ExhibitManager {
             const spacing = 18;
             for (let i = 0; i < grid; i++) {
                 for (let j = 0; j < grid; j++) {
-                    const area = new TextArea(this.textManager.fontData!);
-                    area.width = 1000;
-                    area.height = 3000; // Prevent clipping characters
-                    // ~230 characters per area * 6400 areas = ~1.4M characters
-                    area.text = "The quick brown fox jumps over the lazy dog. MSDF Text Engine is ultra fast. ".repeat(3);
-                    area.wordWrap = true;
-                    area.position.set((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 60);
+                    const area = this.textManager.createTextArea(
+                        "The quick brown fox jumps over the lazy dog. MSDF Text Engine is ultra fast. ".repeat(3),
+                        (i - grid/2) * spacing,
+                        (j - grid/2) * spacing,
+                        (Math.random() - 0.5) * 60
+                    )
+                    .setBoxSize(1000, 3000)
+                    .setWordWrap(true);
                     (area as any).cachedLayout = area.computeLayout();
-                    this.textManager.add(area);
                     this.stressAreas.push(area);
                 }
             }
@@ -242,15 +228,15 @@ export class ExhibitManager {
             const spacing = 20;
             for (let i = 0; i < grid; i++) {
                 for (let j = 0; j < grid; j++) {
-                    const area = new TextArea(this.textManager.fontData!);
-                    area.width = 1000;
-                    area.height = 5000; // Increased to prevent truncation
-                    // ~200 characters * 256 = ~50k instances
-                    area.text = "Simple performance test. MSDF is great! ".repeat(5);
-                    area.wordWrap = true;
-                    area.position.set((i - grid/2) * spacing, (j - grid/2) * spacing, 0);
+                    const area = this.textManager.createTextArea(
+                        "Simple performance test. MSDF is great! ".repeat(5),
+                        (i - grid/2) * spacing,
+                        (j - grid/2) * spacing,
+                        0
+                    )
+                    .setBoxSize(1000, 5000)
+                    .setWordWrap(true);
                     (area as any).cachedLayout = area.computeLayout();
-                    this.textManager.add(area);
                     this.stressAreas.push(area);
                 }
             }
