@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import type { FontData, Char } from './FontData.ts';
-import msdfVert from './shaders/msdf.vert?raw';
-import msdfFrag from './shaders/msdf.frag?raw';
+import type { FontData, Char } from '../Font/FontData.ts';
+import msdfVert from '../shaders/msdf.vert?raw';
+import msdfFrag from '../shaders/msdf.frag?raw';
 
 /**
  * Manages MSDF text rendering using a single Three.js InstancedMesh.

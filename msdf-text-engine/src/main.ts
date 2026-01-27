@@ -1,12 +1,12 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { TextManager } from './TextManager.ts'
-import { TextEffects } from './TextEffects.ts'
-import { NoteBox } from './NoteBox.ts'
-import { BoxManager, GradientMode } from './BoxManager.ts'
-import { TextArea } from './TextArea.ts'
-import { TextEditor } from './TextEditor.ts'
+import { TextManager } from './base/TextManager.ts'
+import { TextEffects } from './Effects/TextEffects.ts'
+import { NoteBox } from './NoteBoxes/NoteBox.ts'
+import { BoxManager, GradientMode } from './NoteBoxes/BoxManager.ts'
+import { TextArea } from './NoteBoxes/TextArea.ts'
+import { TextEditor } from './TextEdit/TextEditor.ts'
 
 /**
  * MSDF TEXT ENGINE - INTERACTIVE PLAYGROUND

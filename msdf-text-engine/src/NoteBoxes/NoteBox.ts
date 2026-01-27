@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TextArea } from './TextArea.ts';
-import { TextManager } from './TextManager.ts';
+import { TextManager } from '../base/TextManager.ts';
 import { BoxManager, GradientMode } from './BoxManager.ts';
 
 /**

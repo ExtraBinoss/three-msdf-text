@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TextArea } from './TextArea.ts';
+import { TextArea } from '../NoteBoxes/TextArea.ts';
 
 /**
  * Agnostic Text Editor.
