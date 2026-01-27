@@ -16,7 +16,7 @@ import { InteractionHandler } from './demo/InteractionHandler'
  */
 
 // 1. Initialize Global Managers
-const boxManager = new BoxManager(scene, 2000);
+const boxManager = new BoxManager(scene, 10);
 const textManager = new TextManager(scene);
 const textEffects = new TextEffects();
 const textEditor = new TextEditor(scene);

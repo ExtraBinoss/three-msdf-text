@@ -33,9 +33,11 @@ export class BoxManager {
     // Maps logicalId -> physical index in the instances array/InstancedMesh
     private idToIndex: Map<number, number> = new Map();
 
+    private scene: THREE.Scene;
+
     constructor(scene: THREE.Scene, maxBoxes: number = 2000) {
+        this.scene = scene;
         this.maxBoxes = maxBoxes;
-        const geometry = new THREE.PlaneGeometry(1, 1);
         
         this.material = new THREE.MeshBasicMaterial({ 
             transparent: true,
@@ -43,16 +45,12 @@ export class BoxManager {
             depthWrite: true
         });
 
-        this.mesh = new THREE.InstancedMesh(geometry, this.material, maxBoxes);
-        
-        const alphaArray = new Float32Array(maxBoxes);
-        const color2Array = new Float32Array(maxBoxes * 3);
-        const modeArray = new Float32Array(maxBoxes);
-        
-        this.mesh.geometry.setAttribute('instanceAlpha', new THREE.InstancedBufferAttribute(alphaArray, 1));
-        this.mesh.geometry.setAttribute('instanceColor2', new THREE.InstancedBufferAttribute(color2Array, 3));
-        this.mesh.geometry.setAttribute('instanceMode', new THREE.InstancedBufferAttribute(modeArray, 1));
+        this.configureShader();
+        this.mesh = this.createMesh(maxBoxes);
+        scene.add(this.mesh);
+    }
 
+    private configureShader() {
         this.material.onBeforeCompile = (shader) => {
             shader.vertexShader = `
                 attribute float instanceAlpha;
@@ -98,16 +96,77 @@ export class BoxManager {
                 `
             );
         };
+    }
 
-        this.mesh.count = 0;
-        this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        this.mesh.frustumCulled = false;
+    private createMesh(capacity: number): THREE.InstancedMesh {
+        const geometry = new THREE.PlaneGeometry(1, 1);
         
-        scene.add(this.mesh);
+        const alphaArray = new Float32Array(capacity);
+        const color2Array = new Float32Array(capacity * 3);
+        const modeArray = new Float32Array(capacity);
+        
+        geometry.setAttribute('instanceAlpha', new THREE.InstancedBufferAttribute(alphaArray, 1));
+        geometry.setAttribute('instanceColor2', new THREE.InstancedBufferAttribute(color2Array, 3));
+        geometry.setAttribute('instanceMode', new THREE.InstancedBufferAttribute(modeArray, 1));
+
+        const mesh = new THREE.InstancedMesh(geometry, this.material, capacity);
+        mesh.count = 0;
+        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        mesh.frustumCulled = false;
+        
+        return mesh;
+    }
+
+    private grow(minCapacity: number) {
+        // Growth strategy: Increase by 20% with a minimum step of 50.
+        // This avoids doubling (e.g. 2000 -> 4000) which wastes VRAM.
+        const growth = Math.max(50, Math.ceil(this.maxBoxes * 0.2));
+        const newCapacity = Math.max(minCapacity, this.maxBoxes + growth);
+        
+        const oldMesh = this.mesh;
+        const oldCount = oldMesh.count;
+        
+        const newMesh = this.createMesh(newCapacity);
+        
+        // Copy instance matrices
+        if (oldCount > 0) {
+            (newMesh.instanceMatrix.array as Float32Array).set(
+                (oldMesh.instanceMatrix.array as Float32Array).subarray(0, oldCount * 16)
+            );
+
+            // Copy attributes
+            const oldAlpha = oldMesh.geometry.getAttribute('instanceAlpha') as THREE.InstancedBufferAttribute;
+            const newAlpha = newMesh.geometry.getAttribute('instanceAlpha') as THREE.InstancedBufferAttribute;
+            (newAlpha.array as Float32Array).set((oldAlpha.array as Float32Array).subarray(0, oldCount));
+            
+            const oldColor2 = oldMesh.geometry.getAttribute('instanceColor2') as THREE.InstancedBufferAttribute;
+            const newColor2 = newMesh.geometry.getAttribute('instanceColor2') as THREE.InstancedBufferAttribute;
+            (newColor2.array as Float32Array).set((oldColor2.array as Float32Array).subarray(0, oldCount * 3));
+            
+            const oldMode = oldMesh.geometry.getAttribute('instanceMode') as THREE.InstancedBufferAttribute;
+            const newMode = newMesh.geometry.getAttribute('instanceMode') as THREE.InstancedBufferAttribute;
+            (newMode.array as Float32Array).set((oldMode.array as Float32Array).subarray(0, oldCount));
+            
+            newMesh.count = oldCount;
+            newMesh.instanceMatrix.needsUpdate = true;
+            newAlpha.needsUpdate = true;
+            newColor2.needsUpdate = true;
+            newMode.needsUpdate = true;
+        }
+
+        this.scene.remove(oldMesh);
+        this.scene.add(newMesh);
+        oldMesh.geometry.dispose(); // PlaneGeometry is small but good practice
+        // Material is shared, don't dispose
+        
+        this.mesh = newMesh;
+        this.maxBoxes = newCapacity;
     }
 
     addBox(position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.NONE): number {
-        if (this.instances.length >= this.maxBoxes) return -1;
+        if (this.instances.length >= this.maxBoxes) {
+            this.grow(this.instances.length + 1);
+        }
 
         const logicalId = this.idCounter++;
         const physicalIndex = this.instances.length;
