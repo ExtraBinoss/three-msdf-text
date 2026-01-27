@@ -48,7 +48,7 @@ export class ExhibitManager {
         
         if (id === 'professional') {
             const corp1 = new NoteBox(this.textManager, this.boxManager, "corp1");
-            corp1.setPosition(-12, 5, 0);
+            corp1.setPosition(-12, 10, 0);
             corp1.setSize(10, 5, 1.0);
             corp1.titleArea.text = "BOX 01";
             corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nAuto-expanding box!\nType as much as you want.";
@@ -58,8 +58,21 @@ export class ExhibitManager {
             });
             this.noteBoxMap.set(corp1.id, corp1);
 
+            const placeholderBox = new NoteBox(this.textManager, this.boxManager, "placeholder-demo");
+            placeholderBox.setPosition(-12, -5, 0);
+            placeholderBox.setSize(10, 4, 1.0);
+            placeholderBox.titleArea.text = ""; // Empty
+            placeholderBox.titleArea.placeholder = "UNTITLED NOTE";
+            placeholderBox.bodyArea.text = ""; // Empty
+            placeholderBox.bodyArea.placeholder = "Click here to start typing...\nPlaceholders behave like real text but with lower opacity.";
+            placeholderBox.setStyle({
+                headerColor1: 0x1e293b,
+                bodyColor1: 0x020617, bodyAlpha: 0.95
+            });
+            this.noteBoxMap.set(placeholderBox.id, placeholderBox);
+
             const simple = new NoteBox(this.textManager, this.boxManager, "simple");
-            simple.setPosition(2, 5, 0);
+            simple.setPosition(0, 5, 0);
             simple.setSize(10, 5, 1.0);
             simple.titleArea.text = "SIMPLE LAYOUT";
             simple.bodyArea.text = "The classic Minimalist theme.\n\nHeader: Solid #666666\nBody: Solid #222222\n\nZero gradients, maximum focus.";
@@ -71,7 +84,7 @@ export class ExhibitManager {
             this.noteBoxMap.set(simple.id, simple);
 
             const palette = new NoteBox(this.textManager, this.boxManager, "palette");
-            palette.setPosition(15, 5, 0);
+            palette.setPosition(12, 5, 0);
             palette.setSize(10, 5, 1.0);
             palette.titleArea.text = "COLOR SAMPLES";
             palette.bodyArea.text = "Enterprise Palette:\n" +

@@ -33,6 +33,8 @@ export class TextArea {
     public wordWrap: boolean = true;
     public lineSpacing: number = 1.0;
     public styles: TextStyle[] = [];
+    public placeholder: string = "";
+    public placeholderColor: THREE.Color = new THREE.Color(1, 1, 1).multiplyScalar(0.4);
     
     // Caret state
     public caretIndex: number = 0;
@@ -56,7 +58,11 @@ export class TextArea {
     computeLayout(): GlyphLayout[] {
         const glyphs: GlyphLayout[] = [];
         this.visualMap = [];
-        const lines = this.text.split('\n');
+        
+        const isPlaceholder = this.text.length === 0 && this.placeholder.length > 0;
+        const activeText = isPlaceholder ? this.placeholder : this.text;
+        
+        const lines = activeText.split('\n');
         
         let cursorY = 0;
         const baseLineHeight = this.fontData.common.lineHeight * this.lineSpacing;
@@ -105,18 +111,21 @@ export class TextArea {
 
                     if (charData) {
                         if (Math.abs(cursorY) <= this.height) {
-                            let charColor = new THREE.Color(1, 1, 1);
+                            let charColor = isPlaceholder ? this.placeholderColor : new THREE.Color(1, 1, 1);
                             let rotation = 0;
                             let scale = 1;
                             let offX = 0;
                             let offY = 0;
-                            for (const style of this.styles) {
-                                if (currentIndex >= style.start && currentIndex < style.end) {
-                                    if (style.color) charColor = style.color;
-                                    if (style.rotation !== undefined) rotation = style.rotation;
-                                    if (style.scale !== undefined) scale = style.scale;
-                                    if (style.offsetX !== undefined) offX = style.offsetX;
-                                    if (style.offsetY !== undefined) offY = style.offsetY;
+                            
+                            if (!isPlaceholder) {
+                                for (const style of this.styles) {
+                                    if (currentIndex >= style.start && currentIndex < style.end) {
+                                        if (style.color) charColor = style.color;
+                                        if (style.rotation !== undefined) rotation = style.rotation;
+                                        if (style.scale !== undefined) scale = style.scale;
+                                        if (style.offsetX !== undefined) offX = style.offsetX;
+                                        if (style.offsetY !== undefined) offY = style.offsetY;
+                                    }
                                 }
                             }
 
