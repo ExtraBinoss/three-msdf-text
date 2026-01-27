@@ -1,0 +1,153 @@
+import * as THREE from 'three';
+import { NoteBox } from '../library/noteBoxes/NoteBox';
+import { BoxManager } from '../library/noteBoxes/BoxManager';
+import { TextManager } from '../library/base/TextManager';
+import { TextEditor } from '../library/textEdit/TextEditor';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+export class InteractionHandler {
+    private raycaster = new THREE.Raycaster();
+    private mouse = new THREE.Vector2();
+    
+    public resizingBox: NoteBox | null = null;
+    public draggingBox: NoteBox | null = null;
+    private dragOffset = new THREE.Vector3();
+    
+    public editingBox: NoteBox | null = null;
+    public editingPart: 'header' | 'body' | null = null;
+
+    private camera: THREE.Camera;
+    private renderer: THREE.WebGLRenderer;
+    private boxManager: BoxManager;
+    private textManager: TextManager;
+    private textEditor: TextEditor;
+    private controls: OrbitControls;
+    private noteBoxMap: Map<string, NoteBox>;
+
+    constructor(
+        camera: THREE.Camera,
+        renderer: THREE.WebGLRenderer,
+        boxManager: BoxManager,
+        textManager: TextManager,
+        textEditor: TextEditor,
+        controls: OrbitControls,
+        noteBoxMap: Map<string, NoteBox>
+    ) {
+        this.camera = camera;
+        this.renderer = renderer;
+        this.boxManager = boxManager;
+        this.textManager = textManager;
+        this.textEditor = textEditor;
+        this.controls = controls;
+        this.noteBoxMap = noteBoxMap;
+        this.setupEventListeners();
+    }
+
+    private setupEventListeners() {
+        this.renderer.domElement.addEventListener('mousemove', (e) => {
+            this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            if (this.resizingBox) {
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -this.resizingBox.position.z);
+                const planeIntersect = new THREE.Vector3();
+                this.raycaster.ray.intersectPlane(plane, planeIntersect);
+                
+                const newW = Math.max(2, planeIntersect.x - this.resizingBox.position.x);
+                const newH = Math.max(2, -(planeIntersect.y - this.resizingBox.position.y));
+                this.resizingBox.setSize(newW, newH);
+            } else if (this.draggingBox) {
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -this.draggingBox.position.z);
+                const planeIntersect = new THREE.Vector3();
+                this.raycaster.ray.intersectPlane(plane, planeIntersect);
+                
+                const newPos = planeIntersect.sub(this.dragOffset);
+                this.draggingBox.setPosition(newPos.x, newPos.y, newPos.z);
+            }
+        });
+
+        this.renderer.domElement.addEventListener('mousedown', () => {
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const mesh = this.boxManager.getMesh();
+            const intersects = this.raycaster.intersectObject(mesh);
+            
+            if (intersects.length > 0) {
+                const hit = intersects[0];
+                const instanceId = hit.instanceId!;
+                let hitBox: NoteBox | null = null;
+                
+                for (const nb of this.noteBoxMap.values()) {
+                    if (nb.getPart(instanceId)) {
+                        hitBox = nb;
+                        break;
+                    }
+                }
+                
+                if (hitBox) {
+                    const part = hitBox.getPart(instanceId);
+                    if (part === 'resize') {
+                        this.resizingBox = hitBox;
+                        this.controls.enabled = false;
+                    } else if (part === 'header' || part === 'body') {
+                        this.draggingBox = hitBox;
+                        this.dragOffset.copy(hit.point).sub(hitBox.position);
+                        this.controls.enabled = false;
+                    }
+                } else {
+                    this.blur();
+                }
+            } else {
+                this.blur();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.resizingBox = null;
+            this.draggingBox = null;
+            this.controls.enabled = true;
+        });
+
+        this.renderer.domElement.addEventListener('dblclick', () => {
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const mesh = this.boxManager.getMesh();
+            const intersects = this.raycaster.intersectObject(mesh);
+            
+            if (intersects.length > 0) {
+                const hit = intersects[0];
+                const instanceId = hit.instanceId!;
+                
+                let hitBox: NoteBox | null = null;
+                for (const nb of this.noteBoxMap.values()) {
+                    if (nb.getPart(instanceId)) {
+                        hitBox = nb;
+                        break;
+                    }
+                }
+
+                if (hitBox) {
+                    const part = hitBox.getPart(instanceId);
+                    if (part === 'header' || part === 'body') {
+                        this.editingBox = hitBox;
+                        this.editingPart = part;
+                        
+                        const localPoint = hitBox.getLocalPoint(part, hit.point, this.textManager.textScale);
+                        const area = part === 'header' ? hitBox.titleArea : hitBox.bodyArea;
+                        const charIdx = area.getIndexAtPos(localPoint.x, localPoint.y);
+                        
+                        this.textEditor.focus(area, charIdx);
+                    }
+                }
+            } else {
+                this.blur();
+            }
+        });
+    }
+
+    private blur() {
+        this.textEditor.focus(null);
+        this.editingBox = null;
+        this.editingPart = null;
+    }
+}

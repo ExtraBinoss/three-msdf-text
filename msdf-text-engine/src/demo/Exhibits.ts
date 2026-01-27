@@ -1,0 +1,149 @@
+import * as THREE from 'three';
+import { NoteBox } from '../library/noteBoxes/NoteBox';
+import { BoxManager, GradientMode } from '../library/noteBoxes/BoxManager';
+import { TextManager } from '../library/base/TextManager';
+import { TextArea } from '../library/noteBoxes/TextArea';
+import { TextEditor } from '../library/textEdit/TextEditor';
+
+const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
+
+export class ExhibitManager {
+    public currentExhibit = 'professional';
+    public noteBoxMap = new Map<string, NoteBox>();
+    public stressAreas: TextArea[] = [];
+
+    private textManager: TextManager;
+    private boxManager: BoxManager;
+    private textEditor: TextEditor;
+
+    constructor(
+        textManager: TextManager,
+        boxManager: BoxManager,
+        textEditor: TextEditor
+    ) {
+        this.textManager = textManager;
+        this.boxManager = boxManager;
+        this.textEditor = textEditor;
+    }
+
+    clearScene() {
+        this.boxManager.clear();
+        this.noteBoxMap.clear();
+        this.stressAreas.length = 0;
+        this.textEditor.focus(null);
+    }
+
+    setExhibit(id: string) {
+        this.currentExhibit = id;
+        const buttons = ['showcase', 'professional', 'notebox', 'stress'];
+        buttons.forEach(name => {
+            document.getElementById(`ex-${name}`)?.classList.toggle('active', name === id);
+        });
+        this.initExhibit(id);
+    }
+
+    private initExhibit(id: string) {
+        this.clearScene();
+        
+        if (id === 'professional') {
+            const corp1 = new NoteBox(this.textManager, this.boxManager, "corp1");
+            corp1.setPosition(-12, 5, 0);
+            corp1.setSize(10, 5, 1.0);
+            corp1.titleArea.text = "BOX 01";
+            corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nAuto-expanding box!\nType as much as you want.";
+            corp1.setStyle({
+                headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
+                bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,
+            });
+            this.noteBoxMap.set(corp1.id, corp1);
+
+            const simple = new NoteBox(this.textManager, this.boxManager, "simple");
+            simple.setPosition(2, 5, 0);
+            simple.setSize(10, 5, 1.0);
+            simple.titleArea.text = "SIMPLE LAYOUT";
+            simple.bodyArea.text = "The classic Minimalist theme.\n\nHeader: Solid #666666\nBody: Solid #222222\n\nZero gradients, maximum focus.";
+            simple.setStyle({
+                headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
+                bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
+                bodyAlpha: 1.0
+            });
+            this.noteBoxMap.set(simple.id, simple);
+
+            const palette = new NoteBox(this.textManager, this.boxManager, "palette");
+            palette.setPosition(15, 5, 0);
+            palette.setSize(10, 5, 1.0);
+            palette.titleArea.text = "COLOR SAMPLES";
+            palette.bodyArea.text = "Enterprise Palette:\n" +
+                                   "• Slate: #1e293b\n" +
+                                   "• Zinc: #18181b\n" +
+                                   "• Neutral: #171717\n" +
+                                   "• Custom: Any Hex value";
+            palette.setStyle({
+                 headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
+                 bodyColor1: 0x18181b, bodyAlpha: 1.0
+            });
+            this.noteBoxMap.set(palette.id, palette);
+        } else if (id === 'showcase') {
+            const hero = new NoteBox(this.textManager, this.boxManager, "hero");
+            hero.setPosition(-7, 5, 0);
+            hero.setSize(14, 2.5, 1.0);
+            hero.titleArea.text = "TYPE FREELY";
+            hero.bodyArea.text = "Double click here. You can now use backspace, arrows, and enter just like a real text editor.";
+            hero.setStyle({
+                headerColor1: 0x444444, headerColor2: 0x333333,
+                bodyColor1: 0x222222, bodyAlpha: 0.95
+            });
+            this.noteBoxMap.set(hero.id, hero);
+
+            const secondary = new NoteBox(this.textManager, this.boxManager, "secondary");
+            secondary.setPosition(-10, 0, 0);
+            secondary.setSize(9, 6.5, 1.2);
+            secondary.titleArea.text = "STABLE GRADIENTS";
+            secondary.bodyArea.text = "Try resizing this box. Notice how the internal layout re-wraps automatically and effects stay anchored.";
+            secondary.setStyle({
+                headerColor1: 0x2c3e50, headerColor2: 0x2c3e50,
+                bodyColor1: 0x1a2a32, bodyColor2: 0x0a1012, bodyGradientMode: GradientMode.VERTICAL,
+                bodyAlpha: 0.95
+            });
+            this.noteBoxMap.set(secondary.id, secondary);
+
+            const hacker = new NoteBox(this.textManager, this.boxManager, "hacker");
+            hacker.setPosition(1, 0, 0);
+            hacker.setSize(9, 6.5, 1.2);
+            hacker.titleArea.text = "TERMINAL GLITCH";
+            hacker.bodyArea.text = "Status: Interactive\nType into the terminal...\n\nEverything is batched on the GPU.";
+            hacker.setStyle({
+                headerColor1: 0x00ff00, headerColor2: 0x008800,
+                bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
+            });
+            this.noteBoxMap.set(hacker.id, hacker);
+
+        } else if (id === 'notebox') {
+            for (let i = 0; i < 3; i++) {
+                const nb = new NoteBox(this.textManager, this.boxManager, `box-${i+1}`);
+                nb.setPosition(-12 + i * 9, 2 - i * 2, i * -1);
+                nb.setSize(8, 6, 1.2);
+                nb.titleArea.text = `BOX ${i+1}`;
+                nb.bodyArea.text = `Real-time text editing enabled.\n\nDouble click to focus.`;
+                this.noteBoxMap.set(nb.id, nb);
+            }
+        } else if (id === 'stress') {
+            const grid = 16;
+            const spacing = 15;
+            for (let i = 0; i < grid; i++) {
+                for (let j = 0; j < grid; j++) {
+                    const area = new TextArea(this.textManager.fontData!);
+                    area.width = 500;
+                    const count = 3 + Math.floor(Math.random() * 5);
+                    let sentence = "";
+                    for(let k=0; k<count; k++) sentence += animals[Math.floor(Math.random() * animals.length)] + " ";
+                    area.text = sentence.trim();
+                    area.wordWrap = true;
+                    (area as any).worldPos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 10);
+                    (area as any).cachedLayout = area.computeLayout();
+                    this.stressAreas.push(area);
+                }
+            }
+        }
+    }
+}
