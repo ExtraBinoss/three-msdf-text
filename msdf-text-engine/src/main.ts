@@ -98,7 +98,8 @@ const initExhibit = (id: string) => {
         corp1.setPosition(-12, 5, 0);
         corp1.setSize(10, 5, 1.0);
         corp1.titleArea.text = "BOX 01";
-        corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nClick to type.";
+        corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nAuto-expanding box!\nType as much as you want.";
+        corp1.autoHeight = true;
         corp1.setStyle({
             headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
             bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,

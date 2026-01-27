@@ -30,6 +30,7 @@ export class NoteBox {
     
     public width: number = 8;
     public height: number = 6;
+    public autoHeight: boolean = false;
     private headerHeight: number = 1.2;
 
     constructor(textManager: TextManager, boxManager: BoxManager) {
@@ -71,7 +72,7 @@ export class NoteBox {
             this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
 
         // Body
-        const bodyH = this.height - this.headerHeight;
+        const bodyH = Math.max(0.1, this.height - this.headerHeight);
         const bodyY = -(this.headerHeight + bodyH / 2);
         const bodyPos = this.position.clone().add(new THREE.Vector3(this.width / 2, bodyY, 0));
         
@@ -121,8 +122,22 @@ export class NoteBox {
         this.titleArea.height = (this.headerHeight - 0.1) / textScale;
         
         this.bodyArea.width = (this.width - 0.5) / textScale;
-        this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
+        // If not autoHeight, clip text. If autoHeight, allow infinite height for computation.
+        this.bodyArea.height = this.autoHeight ? 999999 : (this.height - this.headerHeight - 0.5) / textScale;
 
+        // Perform computation
+        const bodyGlyphsLocal = this.bodyArea.computeLayout();
+        
+        // Auto-Adjust height if enabled
+        if (this.autoHeight) {
+            const contentH = this.bodyArea.getContentHeight() * textScale;
+            const targetH = contentH + this.headerHeight + 0.5;
+            if (Math.abs(this.height - targetH) > 0.01) {
+                this.height = targetH;
+                this.updateGeometry();
+            }
+        }
+        
         const worldOffsetX = this.position.x / textScale;
         const worldOffsetY = this.position.y / textScale;
         const worldOffsetZ = this.position.z;
@@ -141,7 +156,7 @@ export class NoteBox {
         const bodyPadding = 0.2;
         const bodyVertOffset = (this.headerHeight + bodyPadding) / textScale;
 
-        const bodyGlyphs = this.bodyArea.computeLayout().map(g => ({
+        const bodyGlyphs = bodyGlyphsLocal.map(g => ({
             ...g,
             x: g.x + (0.25 / textScale) + worldOffsetX, 
             y: g.y - bodyVertOffset + worldOffsetY,

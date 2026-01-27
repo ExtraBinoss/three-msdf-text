@@ -101,7 +101,7 @@ export class BoxManager {
         scene.add(this.mesh);
     }
 
-    addBox(position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.VERTICAL): number {
+    addBox(position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.NONE): number {
         if (this.instances.length >= this.maxBoxes) return -1;
 
         const id = this.instances.length;
@@ -112,7 +112,7 @@ export class BoxManager {
             color1: color1.clone(), 
             color2: (color2 || color1).clone(), 
             alpha,
-            gradientMode: mode
+            gradientMode: mode || GradientMode.NONE
         };
         this.instances.push(instance);
         
@@ -122,7 +122,7 @@ export class BoxManager {
         return id;
     }
 
-    updateBox(id: number, position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.VERTICAL) {
+    updateBox(id: number, position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.NONE) {
         if (id < 0 || id >= this.instances.length) return;
         
         const instance = this.instances[id];
@@ -131,7 +131,7 @@ export class BoxManager {
         instance.color1.copy(color1);
         instance.color2.copy(color2 || color1);
         instance.alpha = alpha;
-        instance.gradientMode = mode;
+        instance.gradientMode = mode || GradientMode.NONE;
         
         this.updateInstance(id);
     }
