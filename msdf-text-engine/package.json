@@ -1,18 +1,33 @@
 {
   "name": "msdf-text-engine",
-  "private": true,
   "version": "1.0.0",
+  "description": "High-performance MSDF text engine for Three.js",
   "type": "module",
+  "main": "./dist/msdf-text-engine.umd.cjs",
+  "module": "./dist/msdf-text-engine.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/msdf-text-engine.es.js",
+      "require": "./dist/msdf-text-engine.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/node": "^25.0.10",
     "@types/three": "^0.182.0",
     "three": "^0.182.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.5.4",
     "vite-plugin-glsl": "^1.5.5"
   },
   "peerDependencies": {
