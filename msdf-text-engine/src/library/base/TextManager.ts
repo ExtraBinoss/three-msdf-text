@@ -72,13 +72,10 @@ export class TextManager {
         // Headroom strategy: 
         // 20% for small counts, but cap waste at 10k units for large counts
         const padding = Math.min(Math.ceil(requiredCapacity * 0.2), 10000);
-        let newCapacity = requiredCapacity + padding;
+        let newCapacity = Math.max(requiredCapacity + padding, requiredCapacity + 50);
         
-        // Ensure we at least grow by 500
-        newCapacity = Math.max(newCapacity, this.capacity + 500);
-        
-        // Safety cap for initial small jumps
-        if (newCapacity < requiredCapacity) newCapacity = requiredCapacity + 100;
+        // Ensure we don't shrink
+        newCapacity = Math.max(newCapacity, this.capacity);
 
         const oldMesh = this.mesh;
         const oldCount = oldMesh.count;
