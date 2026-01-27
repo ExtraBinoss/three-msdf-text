@@ -1,12 +1,12 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { TextManager } from './base/TextManager.ts'
-import { TextEffects } from './Effects/TextEffects.ts'
-import { NoteBox } from './NoteBoxes/NoteBox.ts'
-import { BoxManager, GradientMode } from './NoteBoxes/BoxManager.ts'
-import { TextArea } from './NoteBoxes/TextArea.ts'
-import { TextEditor } from './TextEdit/TextEditor.ts'
+import { TextManager } from './library/base/TextManager.ts'
+import { TextEffects } from './library/effects/TextEffects.ts'
+import { NoteBox } from './library/noteBoxes/NoteBox.ts'
+import { BoxManager, GradientMode } from './library/noteBoxes/BoxManager.ts'
+import { TextArea } from './library/noteBoxes/TextArea.ts'
+import { TextEditor } from './library/textEdit/TextEditor.ts'
 
 /**
  * MSDF TEXT ENGINE - INTERACTIVE PLAYGROUND
@@ -43,7 +43,7 @@ const textEditor = new TextEditor(scene);
 // State
 let currentExhibit = 'professional';
 const clock = new THREE.Clock();
-const noteBoxes: NoteBox[] = [];
+const noteBoxMap = new Map<string, NoteBox>();
 const stressAreas: TextArea[] = [];
 
 // Selection & Interaction State
@@ -89,7 +89,7 @@ const setExhibit = (id: string) => {
 
 const clearScene = () => {
     boxManager.clear();
-    noteBoxes.length = 0;
+    noteBoxMap.clear();
     stressAreas.length = 0;
     textEditor.focus(null);
 };
@@ -107,9 +107,9 @@ const initExhibit = (id: string) => {
             headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
             bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,
         });
-        noteBoxes.push(corp1);
+        noteBoxMap.set(corp1.id, corp1);
 
-        const simple = new NoteBox(textManager, boxManager);
+        const simple = new NoteBox(textManager, boxManager, "simple");
         simple.setPosition(2, 5, 0);
         simple.setSize(10, 5, 1.0);
         simple.titleArea.text = "SIMPLE LAYOUT";
@@ -119,10 +119,10 @@ const initExhibit = (id: string) => {
             bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
             bodyAlpha: 1.0
         });
-        noteBoxes.push(simple);
+        noteBoxMap.set(simple.id, simple);
 
-        const palette = new NoteBox(textManager, boxManager);
-        palette.setPosition(-12, -2, 0);
+        const palette = new NoteBox(textManager, boxManager, "palette");
+        palette.setPosition(15, 5, 0);
         palette.setSize(10, 5, 1.0);
         palette.titleArea.text = "COLOR SAMPLES";
         palette.bodyArea.text = "Enterprise Palette:\n" +
@@ -134,7 +134,7 @@ const initExhibit = (id: string) => {
              headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
              bodyColor1: 0x18181b, bodyAlpha: 1.0
         });
-        noteBoxes.push(palette);
+        noteBoxMap.set(palette.id, palette);
     } else if (id === 'showcase') {
         const hero = new NoteBox(textManager, boxManager);
         hero.setPosition(-7, 5, 0);
@@ -145,9 +145,9 @@ const initExhibit = (id: string) => {
             headerColor1: 0x444444, headerColor2: 0x333333,
             bodyColor1: 0x222222, bodyAlpha: 0.95
         });
-        noteBoxes.push(hero);
+        noteBoxMap.set(hero.id, hero);
 
-        const secondary = new NoteBox(textManager, boxManager);
+        const secondary = new NoteBox(textManager, boxManager, "secondary");
         secondary.setPosition(-10, 0, 0);
         secondary.setSize(9, 6.5, 1.2);
         secondary.titleArea.text = "STABLE GRADIENTS";
@@ -157,9 +157,9 @@ const initExhibit = (id: string) => {
             bodyColor1: 0x1a2a32, bodyColor2: 0x0a1012, bodyGradientMode: GradientMode.VERTICAL,
             bodyAlpha: 0.95
         });
-        noteBoxes.push(secondary);
+        noteBoxMap.set(secondary.id, secondary);
 
-        const hacker = new NoteBox(textManager, boxManager);
+        const hacker = new NoteBox(textManager, boxManager, "hacker");
         hacker.setPosition(1, 0, 0);
         hacker.setSize(9, 6.5, 1.2);
         hacker.titleArea.text = "TERMINAL GLITCH";
@@ -168,16 +168,16 @@ const initExhibit = (id: string) => {
             headerColor1: 0x00ff00, headerColor2: 0x008800,
             bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
         });
-        noteBoxes.push(hacker);
+        noteBoxMap.set(hacker.id, hacker);
 
     } else if (id === 'notebox') {
         for (let i = 0; i < 3; i++) {
-            const nb = new NoteBox(textManager, boxManager);
+            const nb = new NoteBox(textManager, boxManager, `box-${i+1}`);
             nb.setPosition(-12 + i * 9, 2 - i * 2, i * -1);
             nb.setSize(8, 6, 1.2);
             nb.titleArea.text = `BOX ${i+1}`;
             nb.bodyArea.text = `Real-time text editing enabled.\n\nDouble click to focus.`;
-            noteBoxes.push(nb);
+            noteBoxMap.set(nb.id, nb);
         }
     } else if (id === 'stress') {
         const grid = 16;
@@ -245,17 +245,23 @@ const handleInteraction = () => {
         if (intersects.length > 0) {
             const hit = intersects[0];
             const instanceId = hit.instanceId!;
-            const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
+            let hitBox: NoteBox | null = null;
+            for (const nb of noteBoxMap.values()) {
+                if (nb.getPart(instanceId)) {
+                    hitBox = nb;
+                    break;
+                }
+            }
             
             // Handle Focus & Interaction
-            if (box) {
-                const part = box.getPart(instanceId);
+            if (hitBox) {
+                const part = hitBox.getPart(instanceId);
                 if (part === 'resize') {
-                    resizingBox = box;
+                    resizingBox = hitBox;
                     controls.enabled = false;
                 } else if (part === 'header' || part === 'body') {
-                    draggingBox = box;
-                    dragOffset.copy(hit.point).sub(box.position);
+                    draggingBox = hitBox;
+                    dragOffset.copy(hit.point).sub(hitBox.position);
                     controls.enabled = false;
                 }
             } else {
@@ -286,16 +292,22 @@ const handleInteraction = () => {
         if (intersects.length > 0) {
             const hit = intersects[0];
             const instanceId = hit.instanceId!;
-            const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
-            if (box) {
-                const part = box.getPart(instanceId);
+            let hitBox: NoteBox | null = null;
+            for (const nb of noteBoxMap.values()) {
+                if (nb.getPart(instanceId)) {
+                    hitBox = nb;
+                    break;
+                }
+            }
+            if (hitBox) {
+                const part = hitBox.getPart(instanceId);
                 if (part === 'header' || part === 'body') {
-                    editingBox = box;
+                    editingBox = hitBox;
                     editingPart = part;
                     
                     // NEW: Calculate click index
-                    const localPoint = box.getLocalPoint(part, hit.point, textManager.textScale);
-                    const area = part === 'header' ? box.titleArea : box.bodyArea;
+                    const localPoint = hitBox.getLocalPoint(part, hit.point, textManager.textScale);
+                    const area = part === 'header' ? hitBox.titleArea : hitBox.bodyArea;
                     const charIdx = area.getIndexAtPos(localPoint.x, localPoint.y);
                     
                     textEditor.focus(area, charIdx);
@@ -324,20 +336,22 @@ textManager.load('/font.json', '/font.png').then(() => {
         const defaultTitleColor = isLightBg ? new THREE.Color(0,0,0) : new THREE.Color(1,1,1);
 
         if (currentExhibit === 'professional') {
-             noteBoxes.forEach(nb => textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor));
-             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
-        } else if (currentExhibit === 'showcase' && noteBoxes.length >= 2) {
+             for (const nb of noteBoxMap.values()) {
+                 textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor);
+             }
+             allLayouts = Array.from(noteBoxMap.values()).flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'showcase') {
             textEffects.update(deltaTime);
-            noteBoxes.forEach((nb, i) => {
-                if (i === 0) textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
+            for (const nb of noteBoxMap.values()) {
+                if (nb.id === 'hero') textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
                 else textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor);
-            });
-            allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+            }
+            allLayouts = Array.from(noteBoxMap.values()).flatMap(nb => nb.getLayout(textManager.textScale));
         } else if (currentExhibit === 'notebox') {
-            for (const nb of noteBoxes) {
+            for (const nb of noteBoxMap.values()) {
                 textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, new THREE.Color(0x000000));
             }
-            allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+            allLayouts = Array.from(noteBoxMap.values()).flatMap(nb => nb.getLayout(textManager.textScale));
         } else if (currentExhibit === 'stress') {
             textEffects.update(deltaTime);
             for (const area of stressAreas) {

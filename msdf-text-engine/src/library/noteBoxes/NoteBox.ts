@@ -23,6 +23,7 @@ export class NoteBox {
     public bodyAlpha: number = 0.9;
     public bodyGradientMode: GradientMode = GradientMode.VERTICAL;
 
+    public id: string;
     private boxManager: BoxManager;
     private headerId: number;
     private bodyId: number;
@@ -33,9 +34,10 @@ export class NoteBox {
     public autoHeight: boolean = true;
     private headerHeight: number = 1.2;
 
-    constructor(textManager: TextManager, boxManager: BoxManager) {
+    constructor(textManager: TextManager, boxManager: BoxManager, id?: string) {
         if (!textManager.fontData) throw new Error("Font data must be loaded first");
         
+        this.id = id || `box-${Math.random().toString(36).substr(2, 9)}`;
         this.boxManager = boxManager;
         this.titleArea = new TextArea(textManager.fontData);
         this.bodyArea = new TextArea(textManager.fontData);
@@ -56,6 +58,12 @@ export class NoteBox {
         if (instanceId === this.bodyId) return 'body';
         if (instanceId === this.resizeHandleId) return 'resize';
         return null;
+    }
+
+    dispose() {
+        this.boxManager.removeBox(this.headerId);
+        this.boxManager.removeBox(this.bodyId);
+        this.boxManager.removeBox(this.resizeHandleId);
     }
 
     setSize(w: number, h: number, headerH: number = 1.2) {

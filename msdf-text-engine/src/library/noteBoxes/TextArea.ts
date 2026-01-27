@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { FontData, Char } from '../Font/FontData.ts';
+import type { FontData, Char } from '../font/FontData.ts';
 
 export interface GlyphLayout {
     char: Char;

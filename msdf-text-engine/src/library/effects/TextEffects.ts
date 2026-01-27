@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TextArea } from '../NoteBoxes/TextArea.ts';
+import { TextArea } from '../noteBoxes/TextArea.ts';
 
 /**
  * TextEffects handles per-TextArea styling and animations.

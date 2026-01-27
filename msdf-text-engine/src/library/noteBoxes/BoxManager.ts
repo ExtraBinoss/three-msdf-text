@@ -10,7 +10,7 @@ export const GradientMode = {
 export type GradientMode = typeof GradientMode[keyof typeof GradientMode];
 
 export interface BoxInstance {
-    id: number;
+    logicalId: number;
     position: THREE.Vector3;
     scale: THREE.Vector3;
     color1: THREE.Color;
@@ -20,25 +20,29 @@ export interface BoxInstance {
 }
 
 /**
- * Advanced BoxManager with support for per-instance alpha and multi-mode gradients.
+ * Advanced BoxManager with stable IDs and efficient O(1) removals.
  */
 export class BoxManager {
     private mesh: THREE.InstancedMesh;
-    private geometry: THREE.PlaneGeometry;
     private material: THREE.MeshBasicMaterial;
     private maxBoxes: number;
+    
     private instances: BoxInstance[] = [];
+    private idCounter: number = 0;
+    
+    // Maps logicalId -> physical index in the instances array/InstancedMesh
+    private idToIndex: Map<number, number> = new Map();
 
     constructor(scene: THREE.Scene, maxBoxes: number = 2000) {
         this.maxBoxes = maxBoxes;
-        this.geometry = new THREE.PlaneGeometry(1, 1);
+        const geometry = new THREE.PlaneGeometry(1, 1);
         
         this.material = new THREE.MeshBasicMaterial({ 
             transparent: true,
             side: THREE.DoubleSide
         });
 
-        this.mesh = new THREE.InstancedMesh(this.geometry, this.material, maxBoxes);
+        this.mesh = new THREE.InstancedMesh(geometry, this.material, maxBoxes);
         
         const alphaArray = new Float32Array(maxBoxes);
         const color2Array = new Float32Array(maxBoxes * 3);
@@ -104,9 +108,11 @@ export class BoxManager {
     addBox(position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.NONE): number {
         if (this.instances.length >= this.maxBoxes) return -1;
 
-        const id = this.instances.length;
+        const logicalId = this.idCounter++;
+        const physicalIndex = this.instances.length;
+
         const instance = { 
-            id, 
+            logicalId, 
             position: position.clone(), 
             scale: scale.clone(), 
             color1: color1.clone(), 
@@ -114,18 +120,39 @@ export class BoxManager {
             alpha,
             gradientMode: mode || GradientMode.NONE
         };
+
         this.instances.push(instance);
+        this.idToIndex.set(logicalId, physicalIndex);
         
-        this.updateInstance(id);
+        this.updateInstance(physicalIndex);
         this.mesh.count = this.instances.length;
         
-        return id;
+        return logicalId;
     }
 
-    updateBox(id: number, position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.NONE) {
-        if (id < 0 || id >= this.instances.length) return;
+    removeBox(logicalId: number) {
+        const index = this.idToIndex.get(logicalId);
+        if (index === undefined) return;
+
+        const lastIndex = this.instances.length - 1;
+        if (index !== lastIndex) {
+            // Swap last instance into this spot
+            const lastInstance = this.instances[lastIndex];
+            this.instances[index] = lastInstance;
+            this.idToIndex.set(lastInstance.logicalId, index);
+            this.updateInstance(index);
+        }
+
+        this.instances.pop();
+        this.idToIndex.delete(logicalId);
+        this.mesh.count = this.instances.length;
+    }
+
+    updateBox(logicalId: number, position: THREE.Vector3, scale: THREE.Vector3, color1: THREE.Color, color2?: THREE.Color, alpha: number = 1.0, mode: GradientMode = GradientMode.NONE) {
+        const index = this.idToIndex.get(logicalId);
+        if (index === undefined) return;
         
-        const instance = this.instances[id];
+        const instance = this.instances[index];
         instance.position.copy(position);
         instance.scale.copy(scale);
         instance.color1.copy(color1);
@@ -133,27 +160,27 @@ export class BoxManager {
         instance.alpha = alpha;
         instance.gradientMode = mode || GradientMode.NONE;
         
-        this.updateInstance(id);
+        this.updateInstance(index);
     }
 
-    private updateInstance(id: number) {
-        const instance = this.instances[id];
+    private updateInstance(index: number) {
+        const instance = this.instances[index];
         const dummy = new THREE.Object3D();
         
         dummy.position.copy(instance.position);
         dummy.scale.copy(instance.scale);
         dummy.updateMatrix();
         
-        this.mesh.setMatrixAt(id, dummy.matrix);
-        this.mesh.setColorAt(id, instance.color1);
+        this.mesh.setMatrixAt(index, dummy.matrix);
+        this.mesh.setColorAt(index, instance.color1);
         
         const alphaAttr = this.mesh.geometry.getAttribute('instanceAlpha') as THREE.InstancedBufferAttribute;
         const color2Attr = this.mesh.geometry.getAttribute('instanceColor2') as THREE.InstancedBufferAttribute;
         const modeAttr = this.mesh.geometry.getAttribute('instanceMode') as THREE.InstancedBufferAttribute;
         
-        alphaAttr.setX(id, instance.alpha);
-        color2Attr.setXYZ(id, instance.color2.r, instance.color2.g, instance.color2.b);
-        modeAttr.setX(id, instance.gradientMode);
+        alphaAttr.setX(index, instance.alpha);
+        color2Attr.setXYZ(index, instance.color2.r, instance.color2.g, instance.color2.b);
+        modeAttr.setX(index, instance.gradientMode);
         
         this.mesh.instanceMatrix.needsUpdate = true;
         if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
@@ -164,6 +191,8 @@ export class BoxManager {
 
     clear() {
         this.instances = [];
+        this.idToIndex.clear();
+        this.idCounter = 0;
         this.mesh.count = 0;
     }
 
