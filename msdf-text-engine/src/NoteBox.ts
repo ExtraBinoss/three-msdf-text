@@ -30,7 +30,7 @@ export class NoteBox {
     
     public width: number = 8;
     public height: number = 6;
-    public autoHeight: boolean = false;
+    public autoHeight: boolean = true;
     private headerHeight: number = 1.2;
 
     constructor(textManager: TextManager, boxManager: BoxManager) {
@@ -122,22 +122,27 @@ export class NoteBox {
         this.titleArea.height = (this.headerHeight - 0.1) / textScale;
         
         this.bodyArea.width = (this.width - 0.5) / textScale;
-        // If not autoHeight, clip text. If autoHeight, allow infinite height for computation.
-        this.bodyArea.height = this.autoHeight ? 999999 : (this.height - this.headerHeight - 0.5) / textScale;
-
-        // Perform computation
-        const bodyGlyphsLocal = this.bodyArea.computeLayout();
         
-        // Auto-Adjust height if enabled
+        let bodyGlyphsLocal: any[] = [];
+        
+        // Auto-Adjust height BEFORE layout if enabled
         if (this.autoHeight) {
+            // Temporarily set infinite height to compute full content
+            this.bodyArea.height = 999999;
+            bodyGlyphsLocal = this.bodyArea.computeLayout(); // Compute to populate visualMap AND get glyphs
             const contentH = this.bodyArea.getContentHeight() * textScale;
-            const targetH = contentH + this.headerHeight + 0.5;
-            if (Math.abs(this.height - targetH) > 0.01) {
+            const targetH = Math.max(2, contentH + this.headerHeight + 0.5);
+            
+            if (Math.abs(this.height - targetH) > 0.05) {
                 this.height = targetH;
                 this.updateGeometry();
             }
+            // Keep the infinite height for rendering - we already have the glyphs
+        } else {
+            this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
+            bodyGlyphsLocal = this.bodyArea.computeLayout();
         }
-        
+
         const worldOffsetX = this.position.x / textScale;
         const worldOffsetY = this.position.y / textScale;
         const worldOffsetZ = this.position.z;

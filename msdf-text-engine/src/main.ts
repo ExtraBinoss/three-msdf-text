@@ -99,7 +99,6 @@ const initExhibit = (id: string) => {
         corp1.setSize(10, 5, 1.0);
         corp1.titleArea.text = "BOX 01";
         corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nAuto-expanding box!\nType as much as you want.";
-        corp1.autoHeight = true;
         corp1.setStyle({
             headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
             bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,
@@ -110,7 +109,7 @@ const initExhibit = (id: string) => {
         simple.setPosition(2, 5, 0);
         simple.setSize(10, 5, 1.0);
         simple.titleArea.text = "SIMPLE LAYOUT";
-        simple.bodyArea.text = "The classic Minimalist theme.\n\nHeader: Solid #666666\nBody: Solid #222222\n\nDouble click to edit.";
+        simple.bodyArea.text = "The classic Minimalist theme.\n\nHeader: Solid #666666\nBody: Solid #222222\n\nZero gradients, maximum focus.";
         simple.setStyle({
             headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
             bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
