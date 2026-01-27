@@ -8,6 +8,10 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: msdf-text-engine
+
     steps:
       - uses: actions/checkout@v4
       
