@@ -106,6 +106,103 @@ export class TextEffects {
         }
     }
 
+    /**
+     * Rhythmic breathing/scale effect
+     */
+    updatePulseScale(area: TextArea, start: number, end: number, amp: number = 0.2, speed: number = 3.0) {
+        for (let i = start; i < end; i++) {
+            const s = 1.0 + Math.sin(this.time * speed + i * 0.2) * amp;
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            if (existing) {
+                existing.scale = s;
+            } else {
+                area.styles.push({ start: i, end: i + 1, scale: s });
+            }
+        }
+    }
+
+    /**
+     * Aggressive Glitch effect (color + position shifts)
+     */
+    updateGlitch(area: TextArea, start: number, end: number, intensity: number = 1.0) {
+        for (let i = start; i < end; i++) {
+            const isGlitching = Math.random() < 0.05 * intensity;
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            
+            if (isGlitching) {
+                const offX = (Math.random() - 0.5) * 50 * intensity;
+                const offY = (Math.random() - 0.5) * 50 * intensity;
+                const col = new THREE.Color().setHSL(Math.random(), 0.8, 0.5);
+                
+                if (existing) {
+                    existing.offsetX = offX;
+                    existing.offsetY = offY;
+                    existing.color = col;
+                    existing.scale = 1.0 + (Math.random() - 0.5) * 0.5 * intensity;
+                } else {
+                    area.styles.push({ start: i, end: i + 1, offsetX: offX, offsetY: offY, color: col });
+                }
+            } else {
+                // Return to normal color if we were glitching but aren't now
+                // (Note: this might conflict with other color effects if not careful)
+                if (existing) {
+                    existing.offsetX = 0;
+                    existing.offsetY = 0;
+                }
+            }
+        }
+    }
+
+    /**
+     * Simple vertical wave
+     */
+    updateWave(area: TextArea, start: number, end: number, amp: number = 20, speed: number = 4.0) {
+        for (let i = start; i < end; i++) {
+            const offY = Math.sin(this.time * speed + i * 0.3) * amp;
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            if (existing) {
+                existing.offsetY = offY;
+            } else {
+                area.styles.push({ start: i, end: i + 1, offsetY: offY });
+            }
+        }
+    }
+
+    /**
+     * Erratic shake effect
+     */
+    updateShake(area: TextArea, start: number, end: number, intensity: number = 5.0) {
+        for (let i = start; i < end; i++) {
+            const offX = (Math.random() - 0.5) * intensity;
+            const offY = (Math.random() - 0.5) * intensity;
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            if (existing) {
+                existing.offsetX = offX;
+                existing.offsetY = offY;
+            } else {
+                area.styles.push({ start: i, end: i + 1, offsetX: offX, offsetY: offY });
+            }
+        }
+    }
+
+    /**
+     * Reveal text like a typewriter
+     * @param progress 0 to 1
+     */
+    updateTypewriter(area: TextArea, start: number, end: number, progress: number) {
+        const total = end - start;
+        const visibleCount = Math.floor(total * progress);
+        for (let i = start; i < end; i++) {
+            const scale = (i - start) < visibleCount ? 1.0 : 0.0;
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            if (existing) {
+                existing.scale = scale;
+            } else {
+                area.styles.push({ start: i, end: i + 1, scale });
+            }
+        }
+    }
+
     update(deltaTime: number = 0.016) {
         this.time += deltaTime;
     }

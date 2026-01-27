@@ -7,6 +7,7 @@ export interface GlyphLayout {
     y: number;
     color: THREE.Color;
     rotation?: number;
+    scale?: number;
     offsetX?: number;
     offsetY?: number;
 }
@@ -16,6 +17,7 @@ export interface TextStyle {
     end: number;
     color?: THREE.Color;
     rotation?: number;
+    scale?: number;
     offsetX?: number;
     offsetY?: number;
 }
@@ -105,12 +107,14 @@ export class TextArea {
                         if (Math.abs(cursorY) <= this.height) {
                             let charColor = new THREE.Color(1, 1, 1);
                             let rotation = 0;
+                            let scale = 1;
                             let offX = 0;
                             let offY = 0;
                             for (const style of this.styles) {
                                 if (currentIndex >= style.start && currentIndex < style.end) {
                                     if (style.color) charColor = style.color;
                                     if (style.rotation !== undefined) rotation = style.rotation;
+                                    if (style.scale !== undefined) scale = style.scale;
                                     if (style.offsetX !== undefined) offX = style.offsetX;
                                     if (style.offsetY !== undefined) offY = style.offsetY;
                                 }
@@ -121,7 +125,8 @@ export class TextArea {
                                 x: cursorX + offX,
                                 y: cursorY + offY,
                                 color: charColor,
-                                rotation: rotation
+                                rotation: rotation,
+                                scale: scale
                             });
                         }
                         cursorX += charData.xadvance;

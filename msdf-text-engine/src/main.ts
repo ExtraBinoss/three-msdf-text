@@ -69,6 +69,7 @@ const setupUI = () => {
 };
 
 // --- Main Engine Load ---
+// or use ComicSansMS3-msdf.json and ComicSansMS3.png
 textManager.load('font.json', 'font.png').then(() => {
     setupUI();
     exhibitManager.setExhibit('professional', interaction);
@@ -121,6 +122,17 @@ textManager.load('font.json', 'font.png').then(() => {
                             if (spinIdx !== -1) textEffects.updateRotation(nb.bodyArea, spinIdx, spinIdx + 8, 0.5, 4.0);
                             const floatIdx = nb.bodyArea.text.indexOf("FLOATING");
                             if (floatIdx !== -1) textEffects.updateDisplacement(nb.bodyArea, floatIdx, floatIdx + 8, 40, 3.0);
+                        } else if (nb.id === 'glitch') {
+                            textEffects.updateGlitch(nb.bodyArea, 0, nb.bodyArea.text.length, 1.2);
+                        } else if (nb.id === 'pulse') {
+                            textEffects.updatePulseScale(nb.bodyArea, 0, nb.bodyArea.text.length, 0.25, 4.0);
+                        } else if (nb.id === 'wave') {
+                            textEffects.updateWave(nb.bodyArea, 0, nb.bodyArea.text.length, 30, 5.0);
+                        } else if (nb.id === 'shake') {
+                            textEffects.updateShake(nb.bodyArea, 0, nb.bodyArea.text.length, 10.0);
+                        } else if (nb.id === 'typewriter') {
+                            const progress = (Math.sin(clock.getElapsedTime() * 0.8) * 0.5 + 0.5);
+                            textEffects.updateTypewriter(nb.bodyArea, 0, nb.bodyArea.text.length, progress);
                         }
                     } else {
                         const titleColor = exhibitManager.currentExhibit === 'notebox' ? new THREE.Color(0,0,0) : defaultTitleColor;

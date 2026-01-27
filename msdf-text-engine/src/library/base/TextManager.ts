@@ -116,40 +116,45 @@ export class TextManager {
         this.mesh = newMesh;
         this.capacity = newCapacity;
         this._profileData.growthCount++;
-        
-        console.log(`TextManager grew to ${newCapacity} instances (growth #${this._profileData.growthCount})`);
     }
 
     /**
      * Loads the font JSON data and the texture atlas.
      * @param fontUrl URL to the MSDF font JSON file.
      * @param textureUrl URL to the MSDF font texture image.
-     * @returns A promise that resolves when both assets are loaded.
      */
     async load(fontUrl: string, textureUrl: string): Promise<void> {
-        // Load JSON
-        const response = await fetch(fontUrl);
-        this.fontData = await response.json();
+        try {
+            // 1. Load & Validate Font JSON
+            const response = await fetch(fontUrl);
+            if (!response.ok) throw new Error(`Failed to fetch font data: ${response.statusText}`);
+            
+            this.fontData = await response.json();
+            if (!this.fontData || !this.fontData.chars) {
+                throw new Error("Invalid MSDF font JSON format.");
+            }
 
-        // Process Char Map
-        this.fontData?.chars.forEach(char => {
-            this.charMap.set(char.char, char);
-        });
+            // 2. Process Char Map for O(1) lookups
+            this.charMap.clear();
+            this.fontData.chars.forEach(char => {
+                this.charMap.set(char.char, char);
+            });
 
-        // Load Texture
-        const loader = new THREE.TextureLoader();
-        return new Promise((resolve, reject) => {
-            loader.load(textureUrl, (texture) => {
-                this.material.uniforms.uMap.value = texture;
-                // MSDF textures need specific filtering usually? 
-                // Usually LinearFilter is fine, but maybe MinFilter needs adjustment.
-                // Standard texture settings are usually okay for MSDF.
-                texture.minFilter = THREE.LinearFilter;
-                texture.magFilter = THREE.LinearFilter;
-                texture.generateMipmaps = false; // Usually better for MSDF to avoid mipmap artifacts at small sizes, or handle mipmaps carefully.
-                resolve();
-            }, undefined, reject);
-        });
+            // 3. Load & Configure Texture
+            const loader = new THREE.TextureLoader();
+            const texture = await loader.loadAsync(textureUrl);
+            
+            // MSDF optimization: Disable mipmaps to prevent bleeding at small sizes
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.generateMipmaps = false;
+            
+            this.material.uniforms.uMap.value = texture;
+
+        } catch (error) {
+            console.error(`[TextManager] Asset loading failed:`, error);
+            throw error;
+        }
     }
 
     /**
@@ -267,12 +272,11 @@ export class TextManager {
         const scale = this.textScale; // Use textScale for local glyph scaling
 
         for (const glyph of glyphs) {
-            // No need to check inside loop anymore as we pre-allocated, 
-            // but keeping a safety just in case of future logic changes
             if (instanceIndex >= this.capacity) break; 
 
             const { char, x: gx, y: gy, z: gz } = glyph;
-            dummy.scale.set(char.width * scale, char.height * scale, 1);
+            const finalScale = scale * (glyph.scale !== undefined ? glyph.scale : 1.0);
+            dummy.scale.set(char.width * finalScale, char.height * finalScale, 1);
             
             const posX = (gx + char.xoffset + char.width / 2) * scale;
             const posY = (gy - char.yoffset - char.height / 2) * scale;

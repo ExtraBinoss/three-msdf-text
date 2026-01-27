@@ -108,13 +108,37 @@ export class NoteBox {
         bodyAlpha?: number,
         bodyGradientMode?: GradientMode
     }) {
-        if (config.headerColor1 !== undefined) this.headerColor1 = this.toColor(config.headerColor1);
-        if (config.headerColor2 !== undefined) this.headerColor2 = this.toColor(config.headerColor2);
+        if (config.headerColor1 !== undefined) {
+            this.headerColor1 = this.toColor(config.headerColor1);
+            // If color1 is provided but color2 is not, force solid color
+            if (config.headerColor2 === undefined) {
+                this.headerColor2 = this.headerColor1.clone();
+                this.headerGradientMode = GradientMode.NONE;
+            }
+        }
+        if (config.headerColor2 !== undefined) {
+            this.headerColor2 = this.toColor(config.headerColor2);
+            if (config.headerGradientMode === undefined && this.headerGradientMode === GradientMode.NONE) {
+                this.headerGradientMode = GradientMode.VERTICAL;
+            }
+        }
         if (config.headerAlpha !== undefined) this.headerAlpha = config.headerAlpha;
         if (config.headerGradientMode !== undefined) this.headerGradientMode = config.headerGradientMode;
 
-        if (config.bodyColor1 !== undefined) this.bodyColor1 = this.toColor(config.bodyColor1);
-        if (config.bodyColor2 !== undefined) this.bodyColor2 = this.toColor(config.bodyColor2);
+        if (config.bodyColor1 !== undefined) {
+            this.bodyColor1 = this.toColor(config.bodyColor1);
+            // If bodyColor1 is provided but color2 is not, force solid color
+            if (config.bodyColor2 === undefined) {
+                this.bodyColor2 = this.bodyColor1.clone();
+                this.bodyGradientMode = GradientMode.NONE;
+            }
+        }
+        if (config.bodyColor2 !== undefined) {
+            this.bodyColor2 = this.toColor(config.bodyColor2);
+            if (config.bodyGradientMode === undefined && this.bodyGradientMode === GradientMode.NONE) {
+                this.bodyGradientMode = GradientMode.VERTICAL;
+            }
+        }
         if (config.bodyAlpha !== undefined) this.bodyAlpha = config.bodyAlpha;
         if (config.bodyGradientMode !== undefined) this.bodyGradientMode = config.bodyGradientMode;
 
