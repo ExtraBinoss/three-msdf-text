@@ -72,10 +72,9 @@ export class ExhibitManager {
                 .setStyle({
                     headerColor1: 0x1e293b,
                     bodyColor1: 0x020617, bodyAlpha: 0.95
-                });
-            // Manual placeholder setting isn't part of fluent API yet, so we set it directly
-            placeholderBox.titleArea.placeholder = "UNTITLED NOTE";
-            placeholderBox.bodyArea.placeholder = "Click here to start typing...\nPlaceholders behave like real text but with lower opacity.";
+                })
+                .setTitlePlaceholder("UNTITLED NOTE")
+                .setBodyPlaceholder("Click here to start typing...\nPlaceholders behave like real text but with lower opacity.");
             
             this.noteBoxMap.set(placeholderBox.name, placeholderBox);
 

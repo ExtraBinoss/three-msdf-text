@@ -80,11 +80,12 @@ const noteBox = textManager.createNoteBox(boxManager, "ui-box-1")
     .setBoxSize(8, 6)
     .setTitle("FLUENT API")
     .setBody("NoteBoxes support headers, bodies, gradients, and auto-wrapping text.")
-    .setStyle({
         headerColor1: 0x0088ff,
         bodyColor1: 0x111111,
         bodyAlpha: 0.95
-    });
+    })
+    .setTitlePlaceholder("UNTITLED")
+    .setBodyPlaceholder("Type here...");
     
 // 5. Update Loop
 function animate() {

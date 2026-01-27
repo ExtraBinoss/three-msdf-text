@@ -146,6 +146,24 @@ export class NoteBox extends THREE.Object3D {
         return this;
     }
 
+    /**
+     * Fluent API: Sets the placeholder text for the title. Chainable.
+     * @param text The placeholder string.
+     */
+    setTitlePlaceholder(text: string): this {
+        this.titleArea.placeholder = text;
+        return this;
+    }
+
+    /**
+     * Fluent API: Sets the placeholder text for the body. Chainable.
+     * @param text The placeholder string.
+     */
+    setBodyPlaceholder(text: string): this {
+        this.bodyArea.placeholder = text;
+        return this;
+    }
+
     private updateGeometry() {
         // Ensure matrix is updated to get world positions if needed, 
         // though BoxManager usually wants world space if it's a global manager.
