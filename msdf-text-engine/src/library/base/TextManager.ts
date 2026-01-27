@@ -69,11 +69,13 @@ export class TextManager {
      * Preserves existing instance data.
      */
     private grow(requiredCapacity: number) {
-        // Grow more tightly: 20% headroom or at least 500 units
-        let newCapacity = Math.max(
-            Math.ceil(requiredCapacity * 1.2), 
-            this.capacity + 500
-        );
+        // Headroom strategy: 
+        // 20% for small counts, but cap waste at 10k units for large counts
+        const padding = Math.min(Math.ceil(requiredCapacity * 0.2), 10000);
+        let newCapacity = requiredCapacity + padding;
+        
+        // Ensure we at least grow by 500
+        newCapacity = Math.max(newCapacity, this.capacity + 500);
         
         // Safety cap for initial small jumps
         if (newCapacity < requiredCapacity) newCapacity = requiredCapacity + 100;
