@@ -7,7 +7,11 @@ A ultra-high-performance, professional-grade text rendering engine for Three.js.
 
 ## 🎮 [Live Interactive Demo](https://extrabinoss.github.io/three-msdf-text/)
 
-This package is not uploaded to NPM. Do whatever you want with it.
+## Install it 
+
+```bash
+npm i msdf-text-engine
+```
 
 This library is the base for the rendering of NoteBoxes in our Digital Art creation website [Nodl](https://www.nodl.dev)
 
