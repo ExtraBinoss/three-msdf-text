@@ -57,26 +57,26 @@ npm run dev
 ### Basic Usage
 
 ```typescript
-import { TextManager, NoteBox, BoxManager } from './library';
+import { TextManager } from 'msdf-text-engine';
 
 // 1. Initialize the Rendering Core
 const textManager = new TextManager(scene);
-const boxManager = new BoxManager(scene); // For background UI elements
 
 // 2. Load Font Assets
-await textManager.load('font.json', 'font.png');
+await textManager.load('./inter-msdf.json', './inter-msdf.png');
 
-// 3. Create a NoteBox (Interactive UI)
-const box = new NoteBox(textManager, boxManager);
-box.setPosition(0, 0, 0);
-box.titleArea.text = "PRO TYPOGRAPHY";
-box.bodyArea.text = "This text is rendered in a single draw call.";
+// 3. Create Text with Fluent API
+textManager.createTextArea("HELLO WORLD")
+    .setPos(0, 5, 0)       // Standard coordinates
+    .setScale(1.5)         // Global scaling
+    .setColor(0x00d4ff)    // Hex color support
+    .setBoxSize(10, 5)     // Word-wrapping bounds
+    .setWordWrap(true);    // Enable wrapping
 
 // 4. Update Loop
 function animate() {
-    // Get world-baked glyph layouts
-    const layouts = box.getLayout(textManager.textScale);
-    textManager.renderGlyphs(layouts);
+    // Automatically computes layouts and batches all text into one draw call
+    textManager.update();
     
     renderer.render(scene, camera);
     requestAnimationFrame(animate);

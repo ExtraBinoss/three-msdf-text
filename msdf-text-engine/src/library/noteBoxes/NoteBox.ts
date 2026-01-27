@@ -77,15 +77,65 @@ export class NoteBox extends THREE.Object3D {
         this.boxManager.removeBox(this.resizeHandleId);
     }
     
+    /**
+     * Sets the dimensions of the NoteBox.
+     * @param w Width of the box.
+     * @param h Height of the box.
+     */
     setSize(w: number, h: number) {
         this.width = w;
         this.height = h;
         this.updateGeometry();
     }
 
+    /**
+     * Fluent API: Sets the dimensions of the NoteBox. Chainable.
+     * @param w Width of the box.
+     * @param h Height of the box.
+     */
+    setBoxSize(w: number, h: number): this {
+        this.setSize(w, h);
+        return this;
+    }
+
+    /**
+     * Sets the world position of the NoteBox.
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @param z Z coordinate.
+     */
     setPosition(x: number, y: number, z: number) {
         this.position.set(x, y, z);
         this.updateGeometry();
+    }
+
+    /**
+     * Fluent API: Sets the world position of the NoteBox. Chainable.
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @param z Z coordinate.
+     */
+    setPos(x: number, y: number, z: number): this {
+        this.setPosition(x, y, z);
+        return this;
+    }
+
+    /**
+     * Fluent API: Sets the title text. Chainable.
+     * @param text The title string.
+     */
+    setTitle(text: string): this {
+        this.titleArea.text = text;
+        return this;
+    }
+
+    /**
+     * Fluent API: Sets the body text. Chainable.
+     * @param text The body string.
+     */
+    setBody(text: string): this {
+        this.bodyArea.text = text;
+        return this;
     }
 
     private updateGeometry() {
@@ -125,6 +175,10 @@ export class NoteBox extends THREE.Object3D {
         this.bodyArea.position.set(0.25, -this.headerHeight - 0.2, 0);
     }
 
+    /**
+     * Configures the visual style of the NoteBox. Chainable.
+     * @param config Object containing color and gradient settings.
+     */
     setStyle(config: {
         headerColor1?: number | THREE.Color,
         headerColor2?: number | THREE.Color,
@@ -136,7 +190,7 @@ export class NoteBox extends THREE.Object3D {
         bodyGradientMode?: GradientMode,
         titleColor?: number | THREE.Color,
         textColor?: number | THREE.Color
-    }) {
+    }): this {
         if (config.headerColor1 !== undefined) {
             this.headerColor1 = this.toColor(config.headerColor1);
             // If color1 is provided but color2 is not, force solid color
@@ -179,12 +233,18 @@ export class NoteBox extends THREE.Object3D {
         }
 
         this.updateGeometry();
+        return this;
     }
 
     private toColor(c: number | THREE.Color): THREE.Color {
         return c instanceof THREE.Color ? c : new THREE.Color(c);
     }
 
+    /**
+     * Computes the layout for glyphs to be rendered.
+     * @param textScale The global scale of the text.
+     * @returns Array of glyph layout data.
+     */
     getLayout(textScale: number) {
         // --- Auto Width Check (Title driven) ---
         if (this.autoWidth) {
@@ -254,6 +314,11 @@ export class NoteBox extends THREE.Object3D {
         return [...titleGlyphs, ...bodyGlyphs];
     }
 
+    /**
+     * Gets the world position of the caret for the specified area type.
+     * @param type 'header' or 'body'
+     * @param textScale current text scale
+     */
     getCaretWorldPosition(type: 'header' | 'body', textScale: number) {
         const area = type === 'header' ? this.titleArea : this.bodyArea;
         const local = area.lastCaretPos;
@@ -270,6 +335,9 @@ export class NoteBox extends THREE.Object3D {
         return v;
     }
 
+    /**
+     * Converts a world position to a local text coordinate (for picking).
+     */
     getLocalPoint(type: 'header' | 'body', worldPoint: THREE.Vector3, textScale: number) {
         const area = type === 'header' ? this.titleArea : this.bodyArea;
         const localPoint = worldPoint.clone();

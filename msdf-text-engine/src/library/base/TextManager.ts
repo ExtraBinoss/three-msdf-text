@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import type { FontData, Char } from '../font/FontData.ts';
 import { TextArea } from '../noteBoxes/TextArea';
+import { NoteBox } from '../noteBoxes/NoteBox';
+import { BoxManager } from '../noteBoxes/BoxManager';
 import msdfVert from '../shaders/msdf.vert?raw';
 import msdfFrag from '../shaders/msdf.frag?raw';
 
@@ -380,6 +382,12 @@ export class TextManager {
 
     /**
      * Factory: Creates and registers a new TextArea.
+     * @param text The initial text content.
+     * @param x X world coordinate.
+     * @param y Y world coordinate.
+     * @param z Z world coordinate.
+     * @returns A new TextArea instance managed by this engine.
+     * @throws Error if font data has not been loaded.
      */
     createTextArea(text: string = "", x: number = 0, y: number = 0, z: number = 0): TextArea {
         if (!this.fontData) throw new Error("Font data must be loaded first");
@@ -388,5 +396,17 @@ export class TextManager {
         area.position.set(x, y, z);
         this.add(area);
         return area;
+    }
+
+    /**
+     * Factory: Creates and registers a new NoteBox.
+     * @param boxManager The BoxManager instance to handle background geometry.
+     * @param id Optional unique identifier for the box.
+     * @returns A new NoteBox instance managed by this engine.
+     * @throws Error if font data has not been loaded.
+     */
+    createNoteBox(boxManager: BoxManager, id?: string): NoteBox {
+        if (!this.fontData) throw new Error("Font data must be loaded first");
+        return new NoteBox(this, boxManager, id);
     }
 }
