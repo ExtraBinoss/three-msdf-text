@@ -49,7 +49,7 @@ export class ExhibitManager {
         if (id === 'professional') {
             const corp1 = new NoteBox(this.textManager, this.boxManager, "corp1");
             corp1.setPosition(-12, 10, 0);
-            corp1.setSize(10, 5, 1.0);
+            corp1.setSize(10, 5);
             corp1.titleArea.text = "BOX 01";
             corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nAuto-expanding box!\nType as much as you want.";
             corp1.setStyle({
@@ -60,7 +60,7 @@ export class ExhibitManager {
 
             const placeholderBox = new NoteBox(this.textManager, this.boxManager, "placeholder-demo");
             placeholderBox.setPosition(-12, -5, 0);
-            placeholderBox.setSize(10, 4, 1.0);
+            placeholderBox.setSize(10, 4);
             placeholderBox.titleArea.text = ""; // Empty
             placeholderBox.titleArea.placeholder = "UNTITLED NOTE";
             placeholderBox.bodyArea.text = ""; // Empty
@@ -73,7 +73,7 @@ export class ExhibitManager {
 
             const simple = new NoteBox(this.textManager, this.boxManager, "simple");
             simple.setPosition(0, 5, 0);
-            simple.setSize(10, 5, 1.0);
+            simple.setSize(10, 5);
             simple.titleArea.text = "SIMPLE LAYOUT";
             simple.bodyArea.text = "The classic Minimalist theme.\n\nHeader: Solid #666666\nBody: Solid #222222\n\nZero gradients, maximum focus.";
             simple.setStyle({
@@ -85,7 +85,7 @@ export class ExhibitManager {
 
             const palette = new NoteBox(this.textManager, this.boxManager, "palette");
             palette.setPosition(12, 5, 0);
-            palette.setSize(10, 5, 1.0);
+            palette.setSize(10, 5);
             palette.titleArea.text = "COLOR SAMPLES";
             palette.bodyArea.text = "Enterprise Palette:\n" +
                                    "• Slate: #1e293b\n" +
@@ -100,7 +100,7 @@ export class ExhibitManager {
         } else if (id === 'showcase') {
             const hero = new NoteBox(this.textManager, this.boxManager, "hero");
             hero.setPosition(-7, 10, 0);
-            hero.setSize(14, 2.5, 1.0);
+            hero.setSize(14, 2.5);
             hero.titleArea.text = "TYPE FREELY";
             hero.bodyArea.text = "Double click here. You can now use backspace, arrows, and enter just like a real text editor.";
             hero.setStyle({
@@ -111,7 +111,7 @@ export class ExhibitManager {
 
             const secondary = new NoteBox(this.textManager, this.boxManager, "secondary");
             secondary.setPosition(-10, 2, 0);
-            secondary.setSize(9, 6.5, 1.2);
+            secondary.setSize(9, 6.5);
             secondary.titleArea.text = "STABLE GRADIENTS";
             secondary.bodyArea.text = "Try resizing this box. Notice how the internal layout re-wraps automatically and effects stay anchored.";
             secondary.setStyle({
@@ -123,7 +123,7 @@ export class ExhibitManager {
 
             const hacker = new NoteBox(this.textManager, this.boxManager, "hacker");
             hacker.setPosition(1, 2, 0);
-            hacker.setSize(9, 6.5, 1.2);
+            hacker.setSize(9, 6.5);
             hacker.titleArea.text = "TERMINAL GLITCH";
             hacker.bodyArea.text = "Status: Interactive\nType into the terminal...\n\nEverything is batched on the GPU.";
             hacker.setStyle({
@@ -134,7 +134,7 @@ export class ExhibitManager {
 
             const kinetic = new NoteBox(this.textManager, this.boxManager, "kinetic");
             kinetic.setPosition(12, 5, 0);
-            kinetic.setSize(9, 3.5, 1.2);
+            kinetic.setSize(9, 3.5);
             kinetic.titleArea.text = "KINETIC TYPOGRAPHY";
             kinetic.bodyArea.text = "SPINNING LETTERS\nFLOATING WORDS";
             kinetic.setStyle({
@@ -145,7 +145,7 @@ export class ExhibitManager {
 
             const glitch = new NoteBox(this.textManager, this.boxManager, "glitch");
             glitch.setPosition(12, 12, 0);
-            glitch.setSize(9, 3.5, 1.2);
+            glitch.setSize(9, 3.5);
             glitch.titleArea.text = "GLITCH SYSTEM";
             glitch.bodyArea.text = "CRITICAL ERROR... SYSTEM COMPROMISED";
             glitch.setStyle({
@@ -156,7 +156,7 @@ export class ExhibitManager {
 
             const pulse = new NoteBox(this.textManager, this.boxManager, "pulse");
             pulse.setPosition(1, 18, 0);
-            pulse.setSize(9, 3.5, 1.2);
+            pulse.setSize(9, 3.5);
             pulse.titleArea.text = "BREATHING TEXT";
             pulse.bodyArea.text = "PULSATING RHYTHM\nSOFT SCALE EFFECTS";
             pulse.setStyle({
@@ -167,7 +167,7 @@ export class ExhibitManager {
 
             const wave = new NoteBox(this.textManager, this.boxManager, "wave");
             wave.setPosition(-10, 18, 0);
-            wave.setSize(9, 3.5, 1.2);
+            wave.setSize(9, 3.5);
             wave.titleArea.text = "WAVE FORM";
             wave.bodyArea.text = "OCEANIC MOTION\nSMOOTH SINUSOIDS";
             wave.setStyle({
@@ -178,7 +178,7 @@ export class ExhibitManager {
 
             const shake = new NoteBox(this.textManager, this.boxManager, "shake");
             shake.setPosition(-12, 27, 0);
-            shake.setSize(9, 3.5, 1.2);
+            shake.setSize(9, 3.5);
             shake.titleArea.text = "VIBRATING WARNING";
             shake.bodyArea.text = "DANGER: HIGH CORE HEAT\nSHAKE EFFECT ACTIVE";
             shake.setStyle({
@@ -189,7 +189,7 @@ export class ExhibitManager {
 
             const typewriter = new NoteBox(this.textManager, this.boxManager, "typewriter");
             typewriter.setPosition(1, 27, 0);
-            typewriter.setSize(9, 3.5, 1.2);
+            typewriter.setSize(9, 3.5);
             typewriter.titleArea.text = "TYPEWRITER REVEAL";
             typewriter.bodyArea.text = "Initializing sequence...\nTransmission incoming...";
             typewriter.setStyle({
@@ -202,7 +202,7 @@ export class ExhibitManager {
             for (let i = 0; i < 3; i++) {
                 const nb = new NoteBox(this.textManager, this.boxManager, `box-${i+1}`);
                 nb.setPosition(-12 + i * 9, 2 - i * 2, i * -1);
-                nb.setSize(8, 6, 1.2);
+                nb.setSize(8, 6);
                 nb.titleArea.text = `BOX ${i+1}`;
                 nb.bodyArea.text = `Real-time text editing enabled.\n\nDouble click to focus.`;
                 this.noteBoxMap.set(nb.id, nb);

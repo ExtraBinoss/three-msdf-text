@@ -25,6 +25,7 @@ export class NoteBox {
 
     public id: string;
     private boxManager: BoxManager;
+    private textManager: TextManager;
     private headerId: number;
     private bodyId: number;
     private resizeHandleId: number;
@@ -41,6 +42,7 @@ export class NoteBox {
         
         this.id = id || `box-${Math.random().toString(36).substr(2, 9)}`;
         this.boxManager = boxManager;
+        this.textManager = textManager;
         
         this.titleArea = new TextArea(textManager.fontData);
         this.titleArea.defaultColor.setHex(0xffffff);
@@ -72,14 +74,18 @@ export class NoteBox {
         this.boxManager.removeBox(this.resizeHandleId);
     }
     
-    setSize(w: number, h: number, headerH: number = 1.2) {
+    setSize(w: number, h: number) {
         this.width = w;
         this.height = h;
-        this.headerHeight = headerH;
         this.updateGeometry();
     }
 
     private updateGeometry() {
+        // Compute dynamic header height based on font size
+        // We add some comfortable padding (e.g. 0.6 units total)
+        const fontH = this.titleArea.fontData.common.lineHeight * this.textManager.textScale;
+        this.headerHeight = fontH;
+
         // Header
         const headerPos = this.position.clone().add(new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01));
         this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), 
@@ -98,6 +104,7 @@ export class NoteBox {
         this.boxManager.updateBox(this.resizeHandleId, handlePos, new THREE.Vector3(0.4, 0.4, 1), 
             new THREE.Color(0x888888), new THREE.Color(0xffffff), 1.0, GradientMode.RADIAL);
     }
+
 
     setPosition(x: number, y: number, z: number) {
         this.position.set(x, y, z);
