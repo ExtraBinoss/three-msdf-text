@@ -94,6 +94,12 @@ export class TextEditor {
         } else if (e.key === 'ArrowRight') {
             this.activeArea.caretIndex = Math.min(this.activeArea.text.length, this.activeArea.caretIndex + 1);
             e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+            (this.activeArea as any).moveCaretVertical(-1);
+            e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+            (this.activeArea as any).moveCaretVertical(1);
+            e.preventDefault();
         } else if (e.key === 'Enter') {
              this.insertText('\n');
              e.preventDefault();

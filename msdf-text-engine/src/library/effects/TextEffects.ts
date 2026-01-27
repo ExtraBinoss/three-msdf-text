@@ -68,6 +68,44 @@ export class TextEffects {
         area.text = chars.join('');
     }
 
+    /**
+     * Apply an animated displacement (wave/bounce) effect to a range
+     */
+    updateDisplacement(area: TextArea, start: number, end: number, amp: number = 30, speed: number = 2.0) {
+        // Find existing styles or keep offset-only ones
+        area.styles = area.styles.filter(s => s.end <= start || s.start >= end || (s.color !== undefined));
+
+        for (let i = start; i < end; i++) {
+            const phase = (i * 0.5) + this.time * speed;
+            const offsetY = Math.sin(phase) * amp;
+            const offsetX = Math.cos(phase * 0.7) * (amp * 0.3);
+            
+            // Try to merge with existing color style if possible, or just add
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            if (existing) {
+                existing.offsetX = offsetX;
+                existing.offsetY = offsetY;
+            } else {
+                area.styles.push({ start: i, end: i + 1, offsetX, offsetY });
+            }
+        }
+    }
+
+    /**
+     * Apply animated rotation to a range
+     */
+    updateRotation(area: TextArea, start: number, end: number, amp: number = 0.5, speed: number = 1.0) {
+        for (let i = start; i < end; i++) {
+            const rot = Math.sin(i + this.time * speed) * amp;
+            const existing = area.styles.find(s => s.start === i && s.end === i + 1);
+            if (existing) {
+                existing.rotation = rot;
+            } else {
+                area.styles.push({ start: i, end: i + 1, rotation: rot });
+            }
+        }
+    }
+
     update(deltaTime: number = 0.016) {
         this.time += deltaTime;
     }

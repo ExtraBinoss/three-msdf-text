@@ -6,12 +6,18 @@ export interface GlyphLayout {
     x: number;
     y: number;
     color: THREE.Color;
+    rotation?: number;
+    offsetX?: number;
+    offsetY?: number;
 }
 
 export interface TextStyle {
     start: number;
     end: number;
     color?: THREE.Color;
+    rotation?: number;
+    offsetX?: number;
+    offsetY?: number;
 }
 
 /**
@@ -98,17 +104,24 @@ export class TextArea {
                     if (charData) {
                         if (Math.abs(cursorY) <= this.height) {
                             let charColor = new THREE.Color(1, 1, 1);
+                            let rotation = 0;
+                            let offX = 0;
+                            let offY = 0;
                             for (const style of this.styles) {
                                 if (currentIndex >= style.start && currentIndex < style.end) {
                                     if (style.color) charColor = style.color;
+                                    if (style.rotation !== undefined) rotation = style.rotation;
+                                    if (style.offsetX !== undefined) offX = style.offsetX;
+                                    if (style.offsetY !== undefined) offY = style.offsetY;
                                 }
                             }
 
                             glyphs.push({
                                 char: charData,
-                                x: cursorX,
-                                y: cursorY,
-                                color: charColor
+                                x: cursorX + offX,
+                                y: cursorY + offY,
+                                color: charColor,
+                                rotation: rotation
                             });
                         }
                         cursorX += charData.xadvance;
@@ -174,5 +187,20 @@ export class TextArea {
         }
 
         return Math.min(this.text.length, bestIdx);
+    }
+
+    /**
+     * Moves the caret up or down by a logical line.
+     * @param direction -1 for up, 1 for down
+     */
+    moveCaretVertical(direction: number) {
+        if (this.visualMap.length === 0) return;
+        
+        const lh = this.fontData.common.lineHeight * this.lineSpacing;
+        const targetY = this.lastCaretPos.y - (direction * lh);
+        
+        // Find the index at the target coordinate
+        // We use the last known X to maintain horizontal column position
+        this.caretIndex = this.getIndexAtPos(this.lastCaretPos.x, targetY);
     }
 }

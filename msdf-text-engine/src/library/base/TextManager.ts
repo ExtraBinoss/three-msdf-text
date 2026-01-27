@@ -279,6 +279,13 @@ export class TextManager {
             const posZ = (gz !== undefined ? gz : 0) + 0.02;
 
             dummy.position.set(posX, posY, posZ); 
+            
+            if (glyph.rotation) {
+                dummy.rotation.z = glyph.rotation;
+            } else {
+                dummy.rotation.z = 0;
+            }
+
             dummy.updateMatrix();
             this.mesh.setMatrixAt(instanceIndex, dummy.matrix);
 
@@ -298,6 +305,27 @@ export class TextManager {
         uvOffsetAttribute.needsUpdate = true;
         colorAttribute.needsUpdate = true;
         this._profileData.lastUpdateDuration = performance.now() - startTime;
+    }
+
+    /**
+     * Resets the engine to a clean state and recovers VRAM.
+     * Re-allocates a small buffer if the current one is excessively large.
+     */
+    clear() {
+        const initialCapacity = 100;
+        if (this.capacity > initialCapacity * 2) {
+            // Dispose massive buffer and revert to small one
+            this.scene.remove(this.mesh);
+            this.mesh.geometry.dispose();
+            
+            this.capacity = initialCapacity;
+            this.mesh = this.createMesh(this.capacity);
+            this.scene.add(this.mesh);
+        } else {
+            // Just reset the counter if buffer is already reasonable
+            this.mesh.count = 0;
+            this.mesh.instanceMatrix.needsUpdate = true;
+        }
     }
 
     /**

@@ -25,24 +25,26 @@ export class ExhibitManager {
         this.textEditor = textEditor;
     }
 
-    clearScene() {
+    clearScene(interaction?: any) {
         this.boxManager.clear();
+        this.textManager.clear();
         this.noteBoxMap.clear();
         this.stressAreas.length = 0;
         this.textEditor.focus(null);
+        if (interaction) interaction.clearState();
     }
 
-    setExhibit(id: string) {
+    setExhibit(id: string, interaction?: any) {
         this.currentExhibit = id;
         const buttons = ['showcase', 'professional', 'notebox', 'stress', 'simple-stress'];
         buttons.forEach(name => {
             document.getElementById(`ex-${name}`)?.classList.toggle('active', name === id);
         });
-        this.initExhibit(id);
+        this.initExhibit(id, interaction);
     }
 
-    private initExhibit(id: string) {
-        this.clearScene();
+    private initExhibit(id: string, interaction?: any) {
+        this.clearScene(interaction);
         
         if (id === 'professional') {
             const corp1 = new NoteBox(this.textManager, this.boxManager, "corp1");
@@ -84,7 +86,7 @@ export class ExhibitManager {
             this.noteBoxMap.set(palette.id, palette);
         } else if (id === 'showcase') {
             const hero = new NoteBox(this.textManager, this.boxManager, "hero");
-            hero.setPosition(-7, 5, 0);
+            hero.setPosition(-7, 6, 0);
             hero.setSize(14, 2.5, 1.0);
             hero.titleArea.text = "TYPE FREELY";
             hero.bodyArea.text = "Double click here. You can now use backspace, arrows, and enter just like a real text editor.";
@@ -95,7 +97,7 @@ export class ExhibitManager {
             this.noteBoxMap.set(hero.id, hero);
 
             const secondary = new NoteBox(this.textManager, this.boxManager, "secondary");
-            secondary.setPosition(-10, 0, 0);
+            secondary.setPosition(-10, -3, 0);
             secondary.setSize(9, 6.5, 1.2);
             secondary.titleArea.text = "STABLE GRADIENTS";
             secondary.bodyArea.text = "Try resizing this box. Notice how the internal layout re-wraps automatically and effects stay anchored.";
@@ -107,7 +109,7 @@ export class ExhibitManager {
             this.noteBoxMap.set(secondary.id, secondary);
 
             const hacker = new NoteBox(this.textManager, this.boxManager, "hacker");
-            hacker.setPosition(1, 0, 0);
+            hacker.setPosition(1, -3, 0);
             hacker.setSize(9, 6.5, 1.2);
             hacker.titleArea.text = "TERMINAL GLITCH";
             hacker.bodyArea.text = "Status: Interactive\nType into the terminal...\n\nEverything is batched on the GPU.";
@@ -116,6 +118,17 @@ export class ExhibitManager {
                 bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
             });
             this.noteBoxMap.set(hacker.id, hacker);
+
+            const kinetic = new NoteBox(this.textManager, this.boxManager, "kinetic");
+            kinetic.setPosition(12, 0, 0);
+            kinetic.setSize(9, 6.5, 1.2);
+            kinetic.titleArea.text = "KINETIC TYPOGRAPHY";
+            kinetic.bodyArea.text = "SPINNING LETTERS\n\nFLOATING WORDS\n\nDynamic spatial transforms per character.";
+            kinetic.setStyle({
+                headerColor1: 0xff0088, headerColor2: 0xff00ff,
+                bodyColor1: 0x220022, bodyAlpha: 0.9
+            });
+            this.noteBoxMap.set(kinetic.id, kinetic);
 
         } else if (id === 'notebox') {
             for (let i = 0; i < 3; i++) {

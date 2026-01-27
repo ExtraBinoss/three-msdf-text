@@ -145,6 +145,14 @@ export class InteractionHandler {
         });
     }
 
+    public clearState() {
+        this.resizingBox = null;
+        this.draggingBox = null;
+        this.editingBox = null;
+        this.editingPart = null;
+        this.controls.enabled = true;
+    }
+
     private blur() {
         this.textEditor.focus(null);
         this.editingBox = null;

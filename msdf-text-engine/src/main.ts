@@ -57,11 +57,11 @@ const setupUI = () => {
 
     document.getElementById('btn-2d')?.addEventListener('click', () => set3D(false));
     document.getElementById('btn-3d')?.addEventListener('click', () => set3D(true));
-    document.getElementById('ex-showcase')?.addEventListener('click', () => exhibitManager.setExhibit('showcase'));
-    document.getElementById('ex-professional')?.addEventListener('click', () => exhibitManager.setExhibit('professional'));
-    document.getElementById('ex-notebox')?.addEventListener('click', () => exhibitManager.setExhibit('notebox'));
-    document.getElementById('ex-stress')?.addEventListener('click', () => exhibitManager.setExhibit('stress'));
-    document.getElementById('ex-simple-stress')?.addEventListener('click', () => exhibitManager.setExhibit('simple-stress'));
+    document.getElementById('ex-showcase')?.addEventListener('click', () => exhibitManager.setExhibit('showcase', interaction));
+    document.getElementById('ex-professional')?.addEventListener('click', () => exhibitManager.setExhibit('professional', interaction));
+    document.getElementById('ex-notebox')?.addEventListener('click', () => exhibitManager.setExhibit('notebox', interaction));
+    document.getElementById('ex-stress')?.addEventListener('click', () => exhibitManager.setExhibit('stress', interaction));
+    document.getElementById('ex-simple-stress')?.addEventListener('click', () => exhibitManager.setExhibit('simple-stress', interaction));
 
     document.getElementById('bg-dark')?.addEventListener('click', () => setBG(0x0a0a0a, 'bg-dark'));
     document.getElementById('bg-steel')?.addEventListener('click', () => setBG(0x1e293b, 'bg-steel'));
@@ -71,7 +71,7 @@ const setupUI = () => {
 // --- Main Engine Load ---
 textManager.load('font.json', 'font.png').then(() => {
     setupUI();
-    exhibitManager.setExhibit('professional');
+    exhibitManager.setExhibit('professional', interaction);
 
     function animate() {
         requestAnimationFrame(animate);
@@ -112,8 +112,16 @@ textManager.load('font.json', 'font.png').then(() => {
                 textEffects.update(deltaTime);
                 for (const nb of exhibitManager.noteBoxMap.values()) {
                     // Apply Effects
-                    if (exhibitManager.currentExhibit === 'showcase' && nb.id === 'hero') {
-                        textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
+                    if (exhibitManager.currentExhibit === 'showcase') {
+                        if (nb.id === 'hero') {
+                            textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
+                        } else if (nb.id === 'kinetic') {
+                            textEffects.updateRotation(nb.titleArea, 0, nb.titleArea.text.length, 0.3, 2.0);
+                            const spinIdx = nb.bodyArea.text.indexOf("SPINNING");
+                            if (spinIdx !== -1) textEffects.updateRotation(nb.bodyArea, spinIdx, spinIdx + 8, 0.5, 4.0);
+                            const floatIdx = nb.bodyArea.text.indexOf("FLOATING");
+                            if (floatIdx !== -1) textEffects.updateDisplacement(nb.bodyArea, floatIdx, floatIdx + 8, 40, 3.0);
+                        }
                     } else {
                         const titleColor = exhibitManager.currentExhibit === 'notebox' ? new THREE.Color(0,0,0) : defaultTitleColor;
                         textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, titleColor);
