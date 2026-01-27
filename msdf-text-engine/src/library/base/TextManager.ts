@@ -59,6 +59,7 @@ export class TextManager {
         const mesh = new THREE.InstancedMesh(geometry, this.material, capacity);
         mesh.count = 0;
         mesh.frustumCulled = false;
+        mesh.renderOrder = 999; // Ensure text renders on top of UI boxes
         mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         
         return mesh;

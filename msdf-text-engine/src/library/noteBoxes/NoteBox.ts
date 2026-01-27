@@ -41,8 +41,12 @@ export class NoteBox {
         
         this.id = id || `box-${Math.random().toString(36).substr(2, 9)}`;
         this.boxManager = boxManager;
+        
         this.titleArea = new TextArea(textManager.fontData);
+        this.titleArea.defaultColor.setHex(0xffffff);
+        
         this.bodyArea = new TextArea(textManager.fontData);
+        this.bodyArea.defaultColor.setHex(0xffffff);
         
         // Initialize with default values
         this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
@@ -67,7 +71,7 @@ export class NoteBox {
         this.boxManager.removeBox(this.bodyId);
         this.boxManager.removeBox(this.resizeHandleId);
     }
-
+    
     setSize(w: number, h: number, headerH: number = 1.2) {
         this.width = w;
         this.height = h;
