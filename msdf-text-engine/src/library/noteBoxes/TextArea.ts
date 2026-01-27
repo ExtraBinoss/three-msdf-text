@@ -24,9 +24,10 @@ export interface TextStyle {
 
 /**
  * Agnostic Text Area manager. 
- * Handles layout, word wrapping, and bounds calculation without being tied to a specific renderer.
+ * Handles layout, word wrapping, and bounds calculation.
+ * Now extends Object3D to allow standard Three.js transformations.
  */
-export class TextArea {
+export class TextArea extends THREE.Object3D {
     public width: number = 800;
     public height: number = 600;
     public text: string = "";
@@ -48,6 +49,7 @@ export class TextArea {
     private visualMap: { index: number, x: number, y: number }[] = [];
 
     constructor(fontData: FontData) {
+        super();
         this.fontData = fontData;
         fontData.chars.forEach(c => this.charMap.set(c.char, c));
     }
@@ -242,5 +244,26 @@ export class TextArea {
         // Find the index at the target coordinate
         // We use the last known X to maintain horizontal column position
         this.caretIndex = this.getIndexAtPos(this.lastCaretPos.x, targetY);
+    }
+
+    /**
+     * returns the layout transformed by the Object3D world matrix.
+     * @param textScale The global text scale used by the engine.
+     */
+    getWorldLayout(textScale: number): any[] {
+        const localGlyphs = this.computeLayout();
+        this.updateWorldMatrix(true, false);
+        
+        return localGlyphs.map(g => {
+            const v = new THREE.Vector3(g.x * textScale, g.y * textScale, 0);
+            v.applyMatrix4(this.matrixWorld);
+            return {
+                ...g,
+                x: v.x / textScale,
+                y: v.y / textScale,
+                z: v.z,
+                rotation: this.rotation.z + (g.rotation || 0)
+            };
+        });
     }
 }

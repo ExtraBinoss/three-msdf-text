@@ -7,10 +7,9 @@ import { BoxManager, GradientMode } from './BoxManager.ts';
  * A UI component that manages a background box, a title bar, 
  * and two text areas (Title and Body).
  */
-export class NoteBox {
+export class NoteBox extends THREE.Object3D {
     public titleArea: TextArea;
     public bodyArea: TextArea;
-    public position: THREE.Vector3 = new THREE.Vector3();
     
     // Style Properties
     public headerColor1: THREE.Color = new THREE.Color(0x666666);
@@ -23,7 +22,7 @@ export class NoteBox {
     public bodyAlpha: number = 1.0;
     public bodyGradientMode: GradientMode = GradientMode.NONE;
 
-    public id: string;
+    public name: string;
     private boxManager: BoxManager;
     private textManager: TextManager;
     private headerId: number;
@@ -38,17 +37,20 @@ export class NoteBox {
     private headerHeight: number = 1.0;
 
     constructor(textManager: TextManager, boxManager: BoxManager, id?: string) {
+        super();
         if (!textManager.fontData) throw new Error("Font data must be loaded first");
         
-        this.id = id || `box-${Math.random().toString(36).substr(2, 9)}`;
+        this.name = id || `box-${Math.random().toString(36).substr(2, 9)}`;
         this.boxManager = boxManager;
         this.textManager = textManager;
         
         this.titleArea = new TextArea(textManager.fontData);
         this.titleArea.defaultColor.setHex(0xffffff);
+        this.add(this.titleArea);
         
         this.bodyArea = new TextArea(textManager.fontData);
         this.bodyArea.defaultColor.setHex(0xffffff);
+        this.add(this.bodyArea);
         
         // Initialize with default values
         this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
@@ -80,35 +82,46 @@ export class NoteBox {
         this.updateGeometry();
     }
 
+    setPosition(x: number, y: number, z: number) {
+        this.position.set(x, y, z);
+        this.updateGeometry();
+    }
+
     private updateGeometry() {
-        // Compute dynamic header height based on font size
-        // We add some comfortable padding (e.g. 0.6 units total)
+        // Ensure matrix is updated to get world positions if needed, 
+        // though BoxManager usually wants world space if it's a global manager.
+        // For now let's assume boxes are world-space in the manager.
+        this.updateWorldMatrix(true, false);
+
         const fontH = this.titleArea.fontData.common.lineHeight * this.textManager.textScale;
         this.headerHeight = fontH;
 
         // Header
-        const headerPos = this.position.clone().add(new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01));
+        const headerPos = new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01);
+        headerPos.applyMatrix4(this.matrixWorld);
+
         this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), 
             this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
 
         // Body
         const bodyH = Math.max(0.1, this.height - this.headerHeight);
         const bodyY = -(this.headerHeight + bodyH / 2);
-        const bodyPos = this.position.clone().add(new THREE.Vector3(this.width / 2, bodyY, 0));
+        const bodyPos = new THREE.Vector3(this.width / 2, bodyY, 0);
+        bodyPos.applyMatrix4(this.matrixWorld);
         
         this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), 
             this.bodyColor1, this.bodyColor2, this.bodyAlpha, this.bodyGradientMode);
 
         // Resize Handle (Bottom Right)
-        const handlePos = this.position.clone().add(new THREE.Vector3(this.width - 0.2, -this.height + 0.2, 0.02));
+        const handlePos = new THREE.Vector3(this.width - 0.2, -this.height + 0.2, 0.02);
+        handlePos.applyMatrix4(this.matrixWorld);
+
         this.boxManager.updateBox(this.resizeHandleId, handlePos, new THREE.Vector3(0.4, 0.4, 1), 
             new THREE.Color(0x888888), new THREE.Color(0xffffff), 1.0, GradientMode.RADIAL);
-    }
 
-
-    setPosition(x: number, y: number, z: number) {
-        this.position.set(x, y, z);
-        this.updateGeometry();
+        // Position the TextAreas locally
+        this.titleArea.position.set(0.25 * this.textManager.textScale, 0, 0);
+        this.bodyArea.position.set(0.25 * this.textManager.textScale, -this.headerHeight - 0.2, 0);
     }
 
     setStyle(config: {
@@ -175,13 +188,13 @@ export class NoteBox {
         // --- Auto Width Check (Title driven) ---
         if (this.autoWidth) {
             const oldWrap = this.titleArea.wordWrap;
-            this.titleArea.wordWrap = false; // Never wrap title if autoWidth is on
+            this.titleArea.wordWrap = false;
             this.titleArea.width = 999999;
             this.titleArea.computeLayout();
             const contentW = this.titleArea.getContentWidth() * textScale;
             this.titleArea.wordWrap = oldWrap;
 
-            const targetW = Math.max(this.minWidth, contentW + 1.0); // + padding
+            const targetW = Math.max(this.minWidth, contentW + 1.0);
             if (this.width < targetW) {
                 this.width = targetW;
                 this.updateGeometry();
@@ -190,16 +203,12 @@ export class NoteBox {
 
         this.titleArea.width = (this.width - 0.5) / textScale;
         this.titleArea.height = (this.headerHeight - 0.1) / textScale;
-        
         this.bodyArea.width = (this.width - 0.5) / textScale;
         
         let bodyGlyphsLocal: any[] = [];
-        
-        // Auto-Adjust height BEFORE layout if enabled
         if (this.autoHeight) {
-            // Temporarily set infinite height to compute full content
             this.bodyArea.height = 999999;
-            bodyGlyphsLocal = this.bodyArea.computeLayout(); // Compute to populate visualMap AND get glyphs
+            bodyGlyphsLocal = this.bodyArea.computeLayout();
             const contentH = this.bodyArea.getContentHeight() * textScale;
             const targetH = Math.max(2, contentH + this.headerHeight + 0.5);
             
@@ -207,43 +216,43 @@ export class NoteBox {
                 this.height = targetH;
                 this.updateGeometry();
             }
-            // Keep the infinite height for rendering - we already have the glyphs
         } else {
             this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
             bodyGlyphsLocal = this.bodyArea.computeLayout();
         }
 
-        const worldOffsetX = this.position.x / textScale;
-        const worldOffsetY = this.position.y / textScale;
-        const worldOffsetZ = this.position.z;
-
+        this.updateWorldMatrix(true, true);
         const fontLineHeight = this.titleArea.fontData.common.lineHeight;
         const headerHeightFont = this.headerHeight / textScale;
         const titleVertOffset = (headerHeightFont - fontLineHeight) / 2;
 
-        const titleGlyphs = this.titleArea.computeLayout().map(g => ({
-            ...g,
-            x: g.x + (0.25 / textScale) + worldOffsetX, 
-            y: g.y - titleVertOffset + worldOffsetY,
-            z: worldOffsetZ
-        }));
+        const titleGlyphs = this.titleArea.computeLayout().map(g => {
+            const v = new THREE.Vector3(g.x * textScale, (g.y - titleVertOffset) * textScale, 0);
+            v.applyMatrix4(this.titleArea.matrixWorld);
+            return {
+                ...g,
+                x: v.x / textScale,
+                y: v.y / textScale,
+                z: v.z,
+                rotation: this.titleArea.rotation.z + (g.rotation || 0)
+            };
+        });
 
-        const bodyPadding = 0.2;
-        const bodyVertOffset = (this.headerHeight + bodyPadding) / textScale;
-
-        const bodyGlyphs = bodyGlyphsLocal.map(g => ({
-            ...g,
-            x: g.x + (0.25 / textScale) + worldOffsetX, 
-            y: g.y - bodyVertOffset + worldOffsetY,
-            z: worldOffsetZ
-        }));
+        const bodyGlyphs = bodyGlyphsLocal.map(g => {
+            const v = new THREE.Vector3(g.x * textScale, g.y * textScale, 0);
+            v.applyMatrix4(this.bodyArea.matrixWorld);
+            return {
+                ...g,
+                x: v.x / textScale,
+                y: v.y / textScale,
+                z: v.z,
+                rotation: this.bodyArea.rotation.z + (g.rotation || 0)
+            };
+        });
 
         return [...titleGlyphs, ...bodyGlyphs];
     }
 
-    /**
-     * Translates local caret position to world space for the editor.
-     */
     getCaretWorldPosition(type: 'header' | 'body', textScale: number) {
         const area = type === 'header' ? this.titleArea : this.bodyArea;
         const local = area.lastCaretPos;
@@ -253,35 +262,28 @@ export class NoteBox {
             const fontLineHeight = area.fontData.common.lineHeight;
             const headerHeightFont = this.headerHeight / textScale;
             vertOffset = (headerHeightFont - fontLineHeight) / 2;
-        } else {
-            const bodyPadding = 0.2;
-            vertOffset = (this.headerHeight + bodyPadding) / textScale;
         }
 
-        return {
-            x: this.position.x + (local.x + 0.25 / textScale) * textScale,
-            y: this.position.y + (local.y - vertOffset) * textScale,
-            z: this.position.z + 0.05
-        };
+        const v = new THREE.Vector3(local.x * textScale, (local.y - vertOffset) * textScale, 0.05);
+        v.applyMatrix4(area.matrixWorld);
+        return v;
     }
 
-    /**
-     * Converts a world coordinate to local TextArea space.
-     */
     getLocalPoint(type: 'header' | 'body', worldPoint: THREE.Vector3, textScale: number) {
+        const area = type === 'header' ? this.titleArea : this.bodyArea;
+        const localPoint = worldPoint.clone();
+        area.worldToLocal(localPoint);
+
         let vertOffset = 0;
         if (type === 'header') {
-            const fontLineHeight = this.titleArea.fontData.common.lineHeight;
+            const fontLineHeight = area.fontData.common.lineHeight;
             const headerHeightFont = this.headerHeight / textScale;
             vertOffset = (headerHeightFont - fontLineHeight) / 2;
-        } else {
-            const bodyPadding = 0.2;
-            vertOffset = (this.headerHeight + bodyPadding) / textScale;
         }
 
         return {
-            x: (worldPoint.x - this.position.x) / textScale - (0.25 / textScale),
-            y: (worldPoint.y - this.position.y) / textScale + vertOffset
+            x: localPoint.x / textScale,
+            y: localPoint.y / textScale + vertOffset
         };
     }
 }

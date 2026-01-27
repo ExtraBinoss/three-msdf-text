@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { NoteBox } from '../library/noteBoxes/NoteBox';
 import { BoxManager, GradientMode } from '../library/noteBoxes/BoxManager';
 import { TextManager } from '../library/base/TextManager';
@@ -56,7 +55,8 @@ export class ExhibitManager {
                 headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
                 bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,
             });
-            this.noteBoxMap.set(corp1.id, corp1);
+            this.textManager.add(corp1);
+            this.noteBoxMap.set(corp1.name, corp1);
 
             const placeholderBox = new NoteBox(this.textManager, this.boxManager, "placeholder-demo");
             placeholderBox.setPosition(-12, -5, 0);
@@ -69,7 +69,8 @@ export class ExhibitManager {
                 headerColor1: 0x1e293b,
                 bodyColor1: 0x020617, bodyAlpha: 0.95
             });
-            this.noteBoxMap.set(placeholderBox.id, placeholderBox);
+            this.textManager.add(placeholderBox);
+            this.noteBoxMap.set(placeholderBox.name, placeholderBox);
 
             const simple = new NoteBox(this.textManager, this.boxManager, "simple");
             simple.setPosition(0, 5, 0);
@@ -81,7 +82,8 @@ export class ExhibitManager {
                 bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
                 bodyAlpha: 1.0
             });
-            this.noteBoxMap.set(simple.id, simple);
+            this.textManager.add(simple);
+            this.noteBoxMap.set(simple.name, simple);
 
             const palette = new NoteBox(this.textManager, this.boxManager, "palette");
             palette.setPosition(12, 5, 0);
@@ -96,7 +98,8 @@ export class ExhibitManager {
                  headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
                  bodyColor1: 0x18181b, bodyAlpha: 1.0
             });
-            this.noteBoxMap.set(palette.id, palette);
+            this.textManager.add(palette);
+            this.noteBoxMap.set(palette.name, palette);
         } else if (id === 'showcase') {
             const hero = new NoteBox(this.textManager, this.boxManager, "hero");
             hero.setPosition(-7, 10, 0);
@@ -107,7 +110,8 @@ export class ExhibitManager {
                 headerColor1: 0x444444, headerColor2: 0x333333,
                 bodyColor1: 0x222222, bodyAlpha: 0.95
             });
-            this.noteBoxMap.set(hero.id, hero);
+            this.textManager.add(hero);
+            this.noteBoxMap.set(hero.name, hero);
 
             const secondary = new NoteBox(this.textManager, this.boxManager, "secondary");
             secondary.setPosition(-10, 2, 0);
@@ -119,7 +123,8 @@ export class ExhibitManager {
                 bodyColor1: 0x1a2a32, bodyColor2: 0x0a1012, bodyGradientMode: GradientMode.VERTICAL,
                 bodyAlpha: 0.95
             });
-            this.noteBoxMap.set(secondary.id, secondary);
+            this.textManager.add(secondary);
+            this.noteBoxMap.set(secondary.name, secondary);
 
             const hacker = new NoteBox(this.textManager, this.boxManager, "hacker");
             hacker.setPosition(1, 2, 0);
@@ -130,7 +135,8 @@ export class ExhibitManager {
                 headerColor1: 0x00ff00, headerColor2: 0x008800,
                 bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
             });
-            this.noteBoxMap.set(hacker.id, hacker);
+            this.textManager.add(hacker);
+            this.noteBoxMap.set(hacker.name, hacker);
 
             const kinetic = new NoteBox(this.textManager, this.boxManager, "kinetic");
             kinetic.setPosition(12, 5, 0);
@@ -141,7 +147,8 @@ export class ExhibitManager {
                 headerColor1: 0xff0088, headerColor2: 0xff00ff,
                 bodyColor1: 0x220022, bodyAlpha: 0.9
             });
-            this.noteBoxMap.set(kinetic.id, kinetic);
+            this.textManager.add(kinetic);
+            this.noteBoxMap.set(kinetic.name, kinetic);
 
             const glitch = new NoteBox(this.textManager, this.boxManager, "glitch");
             glitch.setPosition(12, 12, 0);
@@ -152,7 +159,8 @@ export class ExhibitManager {
                 headerColor1: 0xff3300, headerColor2: 0x330000,
                 bodyColor1: 0x110000, bodyAlpha: 0.95
             });
-            this.noteBoxMap.set(glitch.id, glitch);
+            this.textManager.add(glitch);
+            this.noteBoxMap.set(glitch.name, glitch);
 
             const pulse = new NoteBox(this.textManager, this.boxManager, "pulse");
             pulse.setPosition(1, 18, 0);
@@ -163,7 +171,8 @@ export class ExhibitManager {
                 headerColor1: 0x00ffcc, headerColor2: 0x0066aa,
                 bodyColor1: 0x001a1a, bodyAlpha: 0.9
             });
-            this.noteBoxMap.set(pulse.id, pulse);
+            this.textManager.add(pulse);
+            this.noteBoxMap.set(pulse.name, pulse);
 
             const wave = new NoteBox(this.textManager, this.boxManager, "wave");
             wave.setPosition(-10, 18, 0);
@@ -174,7 +183,8 @@ export class ExhibitManager {
                 headerColor1: 0x0088ff, headerColor2: 0x003366,
                 bodyColor1: 0x000a1a, bodyAlpha: 0.9
             });
-            this.noteBoxMap.set(wave.id, wave);
+            this.textManager.add(wave);
+            this.noteBoxMap.set(wave.name, wave);
 
             const shake = new NoteBox(this.textManager, this.boxManager, "shake");
             shake.setPosition(-12, 27, 0);
@@ -185,7 +195,8 @@ export class ExhibitManager {
                 headerColor1: 0xffaa00,
                 bodyColor1: 0x221100, bodyAlpha: 0.95
             });
-            this.noteBoxMap.set(shake.id, shake);
+            this.textManager.add(shake);
+            this.noteBoxMap.set(shake.name, shake);
 
             const typewriter = new NoteBox(this.textManager, this.boxManager, "typewriter");
             typewriter.setPosition(1, 27, 0);
@@ -196,7 +207,8 @@ export class ExhibitManager {
                 headerColor1: 0x00ff00, headerColor2: 0x004400,
                 bodyColor1: 0x001100, bodyAlpha: 0.9
             });
-            this.noteBoxMap.set(typewriter.id, typewriter);
+            this.textManager.add(typewriter);
+            this.noteBoxMap.set(typewriter.name, typewriter);
 
         } else if (id === 'notebox') {
             for (let i = 0; i < 3; i++) {
@@ -205,7 +217,8 @@ export class ExhibitManager {
                 nb.setSize(8, 6);
                 nb.titleArea.text = `BOX ${i+1}`;
                 nb.bodyArea.text = `Real-time text editing enabled.\n\nDouble click to focus.`;
-                this.noteBoxMap.set(nb.id, nb);
+                this.textManager.add(nb);
+                this.noteBoxMap.set(nb.name, nb);
             }
         } else if (id === 'stress') {
             const grid = 80; // 80x80 = 6,400 areas
@@ -218,9 +231,9 @@ export class ExhibitManager {
                     // ~230 characters per area * 6400 areas = ~1.4M characters
                     area.text = "The quick brown fox jumps over the lazy dog. MSDF Text Engine is ultra fast. ".repeat(3);
                     area.wordWrap = true;
-                    const pos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 60);
-                    (area as any).worldPos = pos;
+                    area.position.set((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 60);
                     (area as any).cachedLayout = area.computeLayout();
+                    this.textManager.add(area);
                     this.stressAreas.push(area);
                 }
             }
@@ -235,9 +248,9 @@ export class ExhibitManager {
                     // ~200 characters * 256 = ~50k instances
                     area.text = "Simple performance test. MSDF is great! ".repeat(5);
                     area.wordWrap = true;
-                    const pos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, 0);
-                    (area as any).worldPos = pos;
+                    area.position.set((i - grid/2) * spacing, (j - grid/2) * spacing, 0);
                     (area as any).cachedLayout = area.computeLayout();
+                    this.textManager.add(area);
                     this.stressAreas.push(area);
                 }
             }

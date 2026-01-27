@@ -20,6 +20,8 @@ export class TextManager {
         growthCount: 0
     };
 
+    private managedObjects: Set<any> = new Set();
+
     /**
      * Creates a new TextManager instance with dynamic buffer growth.
      * @param scene The Three.js scene to add the mesh to.
@@ -29,7 +31,6 @@ export class TextManager {
         this.scene = scene;
         this.capacity = initialCapacity;
 
-        // 3. Material
         this.material = new THREE.ShaderMaterial({
             vertexShader: msdfVert,
             fragmentShader: msdfFrag,
@@ -38,10 +39,9 @@ export class TextManager {
             },
             transparent: true,
             side: THREE.DoubleSide,
-            depthTest: false // Optional, depends on use case
+            depthTest: false
         });
 
-        // Initialize mesh with initial capacity
         this.mesh = this.createMesh(this.capacity);
         scene.add(this.mesh);
     }
@@ -331,6 +331,36 @@ export class TextManager {
             this.mesh.count = 0;
             this.mesh.instanceMatrix.needsUpdate = true;
         }
+        this.managedObjects.clear();
+    }
+
+    /**
+     * Managed API: Automatically collects and renders all registered text objects.
+     */
+    add(object: any) {
+        this.managedObjects.add(object);
+    }
+
+    remove(object: any) {
+        this.managedObjects.delete(object);
+    }
+
+    /**
+     * Updates all managed text objects and pushes them to the GPU in one batch.
+     */
+    update() {
+        if (!this.fontData) return;
+        const allLayouts: any[] = [];
+        for (const obj of this.managedObjects) {
+            if (obj.getLayout) {
+                // For NoteBox
+                allLayouts.push(...obj.getLayout(this.textScale));
+            } else if (obj.getWorldLayout) {
+                // For standalone TextArea
+                allLayouts.push(...obj.getWorldLayout(this.textScale));
+            }
+        }
+        this.renderGlyphs(allLayouts);
     }
 
     /**

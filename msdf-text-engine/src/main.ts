@@ -87,50 +87,34 @@ textManager.load('font.json', 'font.png').then(() => {
         const interactionActive = interaction.draggingBox || interaction.resizingBox || interaction.editingBox;
         
         if (exhibitChanged || interactionActive || needsUpdate) {
-            let allLayouts: any[] = [];
-
             // --- Demo Logic Execution ---
             if (exhibitManager.currentExhibit === 'stress' || exhibitManager.currentExhibit === 'simple-stress') {
-                const scale = textManager.textScale;
-                for (const area of exhibitManager.stressAreas) {
-                    const pos = (area as any).worldPos;
-                    const cachedLayout = (area as any).cachedLayout;
-                    
-                    // Optimized color & layout extraction for 1M characters
-                    for (let k = 0; k < cachedLayout.length; k++) {
-                        const glyph = cachedLayout[k];
-                        allLayouts.push({ 
-                            char: glyph.char, 
-                            x: glyph.x + pos.x / scale, 
-                            y: glyph.y + pos.y / scale, 
-                            z: pos.z, 
-                            color: glyph.color 
-                        });
-                    }
-                }
+                // Stress layout is pre-cached, so we don't need to do anything here.
+                // textManager.update() handles the rendering below.
             } else {
                 // Standard NoteBox Layouts
                 textEffects.update(deltaTime);
+                // The loop is gone! textManager.update() handles everything.
+                // We just apply effects once per frame if needed.
                 for (const nb of exhibitManager.noteBoxMap.values()) {
-                    // Apply Effects
                     if (exhibitManager.currentExhibit === 'showcase') {
-                        if (nb.id === 'hero') {
+                        if (nb.name === 'hero') {
                             textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
-                        } else if (nb.id === 'kinetic') {
+                        } else if (nb.name === 'kinetic') {
                             textEffects.updateRotation(nb.titleArea, 0, nb.titleArea.text.length, 0.3, 2.0);
                             const spinIdx = nb.bodyArea.text.indexOf("SPINNING");
                             if (spinIdx !== -1) textEffects.updateRotation(nb.bodyArea, spinIdx, spinIdx + 8, 0.5, 4.0);
                             const floatIdx = nb.bodyArea.text.indexOf("FLOATING");
                             if (floatIdx !== -1) textEffects.updateDisplacement(nb.bodyArea, floatIdx, floatIdx + 8, 40, 3.0);
-                        } else if (nb.id === 'glitch') {
+                        } else if (nb.name === 'glitch') {
                             textEffects.updateGlitch(nb.bodyArea, 0, nb.bodyArea.text.length, 1.2);
-                        } else if (nb.id === 'pulse') {
+                        } else if (nb.name === 'pulse') {
                             textEffects.updatePulseScale(nb.bodyArea, 0, nb.bodyArea.text.length, 0.25, 4.0);
-                        } else if (nb.id === 'wave') {
+                        } else if (nb.name === 'wave') {
                             textEffects.updateWave(nb.bodyArea, 0, nb.bodyArea.text.length, 30, 5.0);
-                        } else if (nb.id === 'shake') {
+                        } else if (nb.name === 'shake') {
                             textEffects.updateShake(nb.bodyArea, 0, nb.bodyArea.text.length, 10.0);
-                        } else if (nb.id === 'typewriter') {
+                        } else if (nb.name === 'typewriter') {
                             const progress = (Math.sin(clock.getElapsedTime() * 0.8) * 0.5 + 0.5);
                             textEffects.updateTypewriter(nb.bodyArea, 0, nb.bodyArea.text.length, progress);
                         }
@@ -138,16 +122,13 @@ textManager.load('font.json', 'font.png').then(() => {
                         const titleColor = defaultTitleColor;
                         textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, titleColor);
                     }
-                    
-                    // Collect Layouts
-                    allLayouts.push(...nb.getLayout(textManager.textScale));
                 }
             }
 
-            // --- GPU Rendering ---
-            textManager.renderGlyphs(allLayouts);
+            // --- GPU Rendering (Managed) ---
+            textManager.update();
             lastExhibit = exhibitManager.currentExhibit;
-            needsUpdate = exhibitManager.currentExhibit === 'showcase'; // Keep updating if rainbow effect is active
+            needsUpdate = exhibitManager.currentExhibit === 'showcase'; 
         }
 
         // --- Interactive Caret (Always updates if focused) ---
