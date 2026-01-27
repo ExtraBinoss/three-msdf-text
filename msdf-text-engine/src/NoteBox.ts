@@ -78,16 +78,23 @@ export class NoteBox {
         this.bodyArea.width = (this.width - 0.5) / textScale;
         this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
 
+        // Calculate World Offsets in Font Space
+        const worldOffsetX = this.position.x / textScale;
+        const worldOffsetY = this.position.y / textScale;
+        const worldOffsetZ = this.position.z;
+
         const titleGlyphs = this.titleArea.computeLayout().map(g => ({
             ...g,
-            x: g.x + (0.25 / textScale), // Padding
-            y: g.y - (0.3 / textScale)  // Header Offset
+            x: g.x + (0.25 / textScale) + worldOffsetX, 
+            y: g.y - (0.3 / textScale) + worldOffsetY,
+            z: worldOffsetZ
         }));
 
         const bodyGlyphs = this.bodyArea.computeLayout().map(g => ({
             ...g,
-            x: g.x + (0.25 / textScale), 
-            y: g.y - ((this.headerHeight + 0.4) / textScale) // Start below header
+            x: g.x + (0.25 / textScale) + worldOffsetX, 
+            y: g.y - ((this.headerHeight + 0.4) / textScale) + worldOffsetY,
+            z: worldOffsetZ
         }));
 
         return [...titleGlyphs, ...bodyGlyphs];

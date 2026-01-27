@@ -187,7 +187,11 @@ export class TextManager {
      * Renders a custom list of glyphs at specific offsets.
      * Useful for complex UI components like NoteBoxes.
      */
-    renderGlyphs(glyphs: any[], worldOffset: THREE.Vector3 = new THREE.Vector3()) {
+    /**
+     * Renders a custom list of glyphs.
+     * Use NoteBox.getLayout() to get glyphs with world positions already baked in.
+     */
+    renderGlyphs(glyphs: any[]) { // glyphs expected to be in world space (relative to 0,0,0) if offset
         const startTime = performance.now();
         let instanceIndex = 0;
         const dummy = new THREE.Object3D();
@@ -195,18 +199,27 @@ export class TextManager {
         
         const scaleW = this.fontData!.common.scaleW;
         const scaleH = this.fontData!.common.scaleH;
-        const scale = this.textScale;
+        const scale = this.textScale; // Use textScale for local glyph scaling
 
         for (const glyph of glyphs) {
             if (instanceIndex >= this.maxChars) break;
 
-            const { char, x: gx, y: gy } = glyph;
+            const { char, x: gx, y: gy, z: gz } = glyph;
             dummy.scale.set(char.width * scale, char.height * scale, 1);
             
-            const posX = worldOffset.x + (gx + char.xoffset + char.width / 2) * scale;
-            const posY = worldOffset.y + (gy - char.yoffset - char.height / 2) * scale;
+            // Glyph layout positions (gx, gy) are already potentially offset by world pos
+            // But strict NoteBox textScale logic was:
+            // x = (gx + char.xoffset + char.width/2) * scale
+            // The NoteBox layout returns {x,y} in FONT units, but offsetted.
+            // Wait, previous NoteBox change: x: g.x + (0.25 / textScale) + worldOffsetX
+            // So gx IS in FONT units.
+            // We need to multiply by scale.
             
-            dummy.position.set(posX, posY, worldOffset.z + 0.02); // Slightly front
+            const posX = (gx + char.xoffset + char.width / 2) * scale;
+            const posY = (gy - char.yoffset - char.height / 2) * scale;
+            const posZ = (gz !== undefined ? gz : 0) + 0.02;
+
+            dummy.position.set(posX, posY, posZ); 
             dummy.updateMatrix();
             this.mesh.setMatrixAt(instanceIndex, dummy.matrix);
 
