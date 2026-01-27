@@ -64,7 +64,8 @@ export class InteractionHandler {
                 this.raycaster.ray.intersectPlane(plane, planeIntersect);
                 
                 const newPos = planeIntersect.sub(this.dragOffset);
-                this.draggingBox.setPosition(newPos.x, newPos.y, newPos.z);
+                // Lock Z to the specific box Z to ensure 2D movement
+                this.draggingBox.setPosition(newPos.x, newPos.y, this.draggingBox.position.z);
             }
         });
 
@@ -86,6 +87,8 @@ export class InteractionHandler {
                 }
                 
                 if (hitBox) {
+                    this.bringToFront(hitBox);
+
                     const part = hitBox.getPart(instanceId);
 
                     // Single-click to move caret if already editing this exact area
@@ -108,7 +111,14 @@ export class InteractionHandler {
                         this.controls.enabled = false;
                     } else if (part === 'header' || part === 'body') {
                         this.draggingBox = hitBox;
-                        this.dragOffset.copy(hit.point).sub(hitBox.position);
+                        
+                        // Recalculate the hit point on the NEW Z-plane to ensure 2D dragging stability
+                        // Using 'hit.point' would use the OLD Z-plane intersection, causing the box to snap back in Z 
+                        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -hitBox.position.z);
+                        const planePoint = new THREE.Vector3();
+                        this.raycaster.ray.intersectPlane(plane, planePoint);
+                        
+                        this.dragOffset.copy(planePoint).sub(hitBox.position);
                         this.controls.enabled = false;
                     }
                 } else {
@@ -161,6 +171,34 @@ export class InteractionHandler {
         });
     }
 
+    private bringToFront(box: NoteBox) {
+        // Collect all managed boxes
+        const boxes = Array.from(this.noteBoxMap.values());
+        
+        // Sort boxes by current Z value to preserve relative ordering of unselected boxes
+        boxes.sort((a, b) => a.position.z - b.position.z);
+        
+        // Move the selected box to the end (top-most)
+        const index = boxes.indexOf(box);
+        if (index > -1) {
+            boxes.splice(index, 1);
+            boxes.push(box);
+        }
+
+        // Re-normalize Z values to keep them within a reasonable range (e.g. 0.0 to N * 0.05)
+        // This prevents Z values from growing infinitely with every click
+        const startZ = 0.0;
+        const step = 0.05;
+        
+        boxes.forEach((b, i) => {
+            const newZ = startZ + (i * step);
+            // Only update if the Z changed significantly to avoid dirtying the geometry unnecessarily
+            if (Math.abs(b.position.z - newZ) > 0.001) {
+                b.setPosition(b.position.x, b.position.y, newZ);
+            }
+        });
+    }
+
     public clearState() {
         this.resizingBox = null;
         this.draggingBox = null;
@@ -175,3 +213,4 @@ export class InteractionHandler {
         this.editingPart = null;
     }
 }
+
