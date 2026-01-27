@@ -61,6 +61,11 @@ export class TextArea {
 
                 // Add characters to layout
                 for (const charData of wordChars) {
+                    // Check bounds (simple efficient clipping)
+                    if (Math.abs(cursorY) > this.height) {
+                        return glyphs; // Stop processing if we exceed height
+                    }
+
                     glyphs.push({
                         char: charData,
                         x: cursorX,

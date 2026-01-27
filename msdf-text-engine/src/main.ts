@@ -25,21 +25,17 @@ const boxManager = new BoxManager(scene, 100);
 const textManager = new TextManager(scene, 5000);
 
 textManager.load('/font.json', '/font.png').then(() => {
-    // Create Note Box
+    // We store references to simulate resize
     const note = new NoteBox(textManager, boxManager);
     note.setSize(10, 8, 1.2);
     note.setPosition(0, 0, 0);
-    
     note.titleArea.text = "NOTELOG v1.0";
     note.bodyArea.text = "This is a NoteBox component.\n\n" +
                          "It features a dedicated Title Bar and a main body area with automatic word wrapping. " +
                          "The geometry is handled by standard Three.js planes, while the text is batched into " +
-                         "the master InstancedMesh for maximum performance.";
+                         "the master InstancedMesh for maximum performance.\n\n" +
+                         "Try resizing this box! The text will automatically reflow and hide if it overflows.";
 
-    // Render text to the manager
-    textManager.renderGlyphs(note.getLayout(textManager.textScale));
-
-    // Demo: Create a second box to prove batching
     const note2 = new NoteBox(textManager, boxManager);
     note2.setSize(8, 6, 1.2);
     note2.setPosition(12, 1, -2);
@@ -47,17 +43,27 @@ textManager.load('/font.json', '/font.png').then(() => {
     note2.bodyArea.text = "This second box is drawn in the same draw calls as the first one.\n" +
                           "1 Draw call for all boxes.\n" +
                           "1 Draw call for all text.";
-    
-    // We append the new glyphs to the render list
-    // Ideally we would manage a list of all renderable objects, but for this demo manual calling is fine
-    // Note: renderGlyphs resets the mesh, so we need to batch them ourselves or call addGlyphs?
-    // Current TextManager.renderGlyphs resets everything. 
-    // Let's just combine them for the demo.
-    const layouts = [
-        ...note.getLayout(textManager.textScale),
-        ...note2.getLayout(textManager.textScale)
-    ];
-    textManager.renderGlyphs(layouts);
+
+    // Simulation Loop for Resize
+    let time = 0;
+    function updateLayouts() {
+        time += 0.05;
+        // Oscillate width and height
+        const newW = 10 + Math.sin(time) * 3;
+        const newH = 8 + Math.cos(time * 0.7) * 2;
+        
+        note.setSize(newW, newH, 1.2);
+        
+        // Re-calculate layouts
+        const layouts = [
+            ...note.getLayout(textManager.textScale),
+            ...note2.getLayout(textManager.textScale)
+        ];
+        textManager.renderGlyphs(layouts);
+        
+        requestAnimationFrame(updateLayouts);
+    }
+    updateLayouts();
 
 }).catch(err => {
     console.error('Failed to load font:', err)

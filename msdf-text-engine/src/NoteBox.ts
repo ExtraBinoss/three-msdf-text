@@ -73,7 +73,10 @@ export class NoteBox {
     getLayout(textScale: number) {
         // Map world units to font pixels for wrapping
         this.titleArea.width = (this.width - 0.5) / textScale;
+        this.titleArea.height = (this.headerHeight - 0.1) / textScale;
+        
         this.bodyArea.width = (this.width - 0.5) / textScale;
+        this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
 
         const titleGlyphs = this.titleArea.computeLayout().map(g => ({
             ...g,
