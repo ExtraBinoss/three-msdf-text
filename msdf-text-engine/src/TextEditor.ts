@@ -19,16 +19,22 @@ export class TextEditor {
             color: 0x00d4ff, 
             transparent: true,
             opacity: 0.9,
-            depthTest: false // Ensure it's always visible above the box
+            depthTest: false,
+            depthWrite: false
         });
         this.caretMesh = new THREE.Mesh(geometry, material);
         this.caretMesh.visible = false;
-        this.caretMesh.renderOrder = 999;
+        this.caretMesh.renderOrder = 9999;
         scene.add(this.caretMesh);
 
         // Global key listeners
         window.addEventListener('keydown', (e) => this.handleKeyDown(e));
         window.addEventListener('keypress', (e) => this.handleKeyPress(e));
+    }
+
+    setColor(color: number | THREE.Color) {
+        const material = this.caretMesh.material as THREE.MeshBasicMaterial;
+        material.color.set(color);
     }
 
     focus(area: TextArea | null, index?: number) {

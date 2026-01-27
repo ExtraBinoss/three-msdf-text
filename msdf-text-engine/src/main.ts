@@ -233,10 +233,25 @@ const handleInteraction = () => {
         if (intersects.length > 0) {
             const instanceId = intersects[0].instanceId!;
             const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
-            if (box && box.getPart(instanceId) === 'resize') {
-                resizingBox = box;
-                controls.enabled = false;
+            
+            // Handle Focus & Blur
+            if (box) {
+                const part = box.getPart(instanceId);
+                if (part === 'resize') {
+                    resizingBox = box;
+                    controls.enabled = false;
+                }
+            } else {
+                // Clicked something else (not a NoteBox)
+                textEditor.focus(null);
+                editingBox = null;
+                editingPart = null;
             }
+        } else {
+            // Clicked background
+            textEditor.focus(null);
+            editingBox = null;
+            editingPart = null;
         }
     });
 
@@ -325,6 +340,11 @@ textManager.load('/font.json', '/font.png').then(() => {
         // UPDATE CARET POSITION
         if (editingBox && editingPart) {
             textEditor.update(deltaTime);
+            
+            // Dynamic Caret Color based on background
+            if (isLightBg) textEditor.setColor(0x000000);
+            else textEditor.setColor(0x00d4ff);
+
             const caretWorld = editingBox.getCaretWorldPosition(editingPart, textManager.textScale);
             textEditor.setCaretPosition(caretWorld.x, caretWorld.y, caretWorld.z, textManager.textScale * textManager.fontData!.common.lineHeight);
         }
