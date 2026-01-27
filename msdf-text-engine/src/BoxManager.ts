@@ -32,6 +32,7 @@ export class BoxManager {
         this.mesh = new THREE.InstancedMesh(this.geometry, this.material, maxBoxes);
         this.mesh.count = 0;
         this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.mesh.frustumCulled = false;
         
         scene.add(this.mesh);
     }
