@@ -84,36 +84,21 @@ export class TextManager {
         // Create new mesh with larger capacity
         const newMesh = this.createMesh(newCapacity);
         
-        // Copy existing instance data
+        // Copy existing instance data using high-speed TypedArray.set()
         if (oldCount > 0) {
+            // Copy Instance Matrices
+            (newMesh.instanceMatrix.array as Float32Array).set(
+                (oldMesh.instanceMatrix.array as Float32Array).subarray(0, oldCount * 16)
+            );
+
+            // Copy Custom Attributes (UVs and Colors)
             const oldUvAttr = oldMesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
             const newUvAttr = newMesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
             const oldColorAttr = oldMesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
             const newColorAttr = newMesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
             
-            // Copy matrices
-            for (let i = 0; i < oldCount; i++) {
-                const matrix = new THREE.Matrix4();
-                oldMesh.getMatrixAt(i, matrix);
-                newMesh.setMatrixAt(i, matrix);
-                
-                // Copy UV data
-                newUvAttr.setXYZW(
-                    i,
-                    oldUvAttr.getX(i),
-                    oldUvAttr.getY(i),
-                    oldUvAttr.getZ(i),
-                    oldUvAttr.getW(i)
-                );
-                
-                // Copy color data
-                newColorAttr.setXYZ(
-                    i,
-                    oldColorAttr.getX(i),
-                    oldColorAttr.getY(i),
-                    oldColorAttr.getZ(i)
-                );
-            }
+            (newUvAttr.array as Float32Array).set((oldUvAttr.array as Float32Array).subarray(0, oldCount * 4));
+            (newColorAttr.array as Float32Array).set((oldColorAttr.array as Float32Array).subarray(0, oldCount * 3));
             
             newMesh.count = oldCount;
             newMesh.instanceMatrix.needsUpdate = true;

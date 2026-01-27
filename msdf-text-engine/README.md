@@ -9,17 +9,23 @@ A professional-grade, ultra-high-performance text rendering engine for Three.js.
 Rendering text in 3D is notoriously difficult and usually comes with a choice: blurry textures or low performance. This engine gives you the best of both worlds:
 
 - **Infinite Sharpness**: MSDF technology keeps text razor-sharp even when the camera is zoomed in close.
-- **Extreme Scale**: Render **10,000+ characters** at 60 FPS. Every glyph is a GPU instance, meaning zero CPU overhead for layout updates.
+- **Extreme Scale**: Render **up to 1,000,000 characters** in a single scene. Every glyph is a GPU instance, meaning zero CPU overhead for layout updates.
 - **Real-time Interactivity**: A built-in `TextEditor` provides a native-feeling experience with carats, arrow key navigation, and word wrapping.
 
-## ✨ Key Features
+## ⚙️ How It Works: The Performance Pillars
 
-- 💎 **Instanced Rendering**: Perfectly batched drawing via `THREE.InstancedMesh`.
-- 📦 **NoteBox UI System**: Professional window-like containers with draggable headers and manual resizing.
-- 🎨 **Dynamic Styling**: Independent control over text color, rainbow effects, and gradients (Radial, Vertical, Horizontal).
-- ⌨️ **Live Editing**: Double-click any text area to enter edit mode with full keyboard support and blinking caret.
-- 📏 **Smart Layout**: Automatic line wrapping and `autoHeight` containers that grow as you type.
-- 🛠️ **Memory Optimized**: intelligent buffer growth (20% headroom) to prevent GPU re-allocations.
+This engine achieves its extreme scale (1M+ characters) through two specialized technologies working in tandem:
+
+### 1. MSDF (Multi-channel Signed Distance Fields)
+Unlike standard text textures that get blurry when scaled, MSDF encodes distance information into three color channels (RGB).
+- **Resolution Independent**: Text stays perfectly sharp at any zoom level or resolution.
+- **Fast Rendering**: The heavy lifting of edge smoothing is done in a simple fragment shader, making it much lighter than high-resolution font atlases.
+
+### 2. Extreme GPU Instancing
+Traditional Three.js text creates unique geometry for every character, which kills performance via "Draw Call Overhead." 
+- **Single Draw Call**: This engine uses a single `THREE.InstancedMesh`. Every character in the scene—even if there are a million—is rendered in **one single draw call**.
+- **GPU-Side Layout**: We only send raw position and UV data to the GPU. The GPU then replicates the character quad a million times instantly.
+- **Zero Memory Waste**: The engine uses a "Tight Fit" buffer strategy with 20% headroom, ensuring we use only as much VRAM as absolutely necessary.
 
 ## 🏗️ Architecture
 
@@ -68,11 +74,10 @@ function animate() {
 ```
 
 ## 📈 Performance Benchmarks
-
 In **Turbo Mode**, the engine handles:
-- **Instances**: 10,240+ glyphs
+- **Instances**: 1,000,000+ glyphs
 - **Draw Calls**: 2 (1 for all text, 1 for all backgrounds)
-- **CPU Time**: < 1.5ms per layout update
+- **CPU Time**: Updates are processed on the GPU via instances.
 
 ## 📜 License
 

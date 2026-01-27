@@ -81,20 +81,18 @@ textManager.load('font.json', 'font.png').then(() => {
 
         // --- Demo Logic Execution ---
         if (exhibitManager.currentExhibit === 'stress') {
-            textEffects.update(deltaTime);
+            const scale = textManager.textScale;
             for (const area of exhibitManager.stressAreas) {
                 const pos = (area as any).worldPos;
                 const cachedLayout = (area as any).cachedLayout;
-                textEffects.updateRainbow(area, 0, area.text.length, 0.4);
                 
+                // Optimized color & layout extraction for 1M characters
                 for (let k = 0; k < cachedLayout.length; k++) {
                     const glyph = cachedLayout[k];
-                    const style = area.styles.find(s => k >= s.start && k < s.end);
-                    if (style && style.color) glyph.color = style.color;
                     allLayouts.push({ 
                         char: glyph.char, 
-                        x: glyph.x + pos.x / textManager.textScale, 
-                        y: glyph.y + pos.y / textManager.textScale, 
+                        x: glyph.x + pos.x / scale, 
+                        y: glyph.y + pos.y / scale, 
                         z: pos.z, 
                         color: glyph.color 
                     });
@@ -139,8 +137,14 @@ textManager.load('font.json', 'font.png').then(() => {
         // --- Stats ---
         const profile = textManager.getProfile();
         const statsEl = document.getElementById('stats');
+        const gpuStatsEl = document.getElementById('gpu-stats');
+
         if (statsEl) {
             statsEl.innerText = `FPS: ${Math.round(1/deltaTime)}\nINSTANCES: ${profile.visibleCharacters}\nBUFFER: ${profile.bufferCapacity}\nCPU: ${profile.lastUpdateDuration.toFixed(2)}ms`;
+        }
+
+        if (gpuStatsEl) {
+            gpuStatsEl.innerText = `DRAW CALLS: ${renderer.info.render.calls}\nTRIANGLES: ${renderer.info.render.triangles.toLocaleString()}\nTEXTURES: ${renderer.info.memory.textures}`;
         }
     }
     

@@ -5,7 +5,6 @@ import { TextManager } from '../library/base/TextManager';
 import { TextArea } from '../library/noteBoxes/TextArea';
 import { TextEditor } from '../library/textEdit/TextEditor';
 
-const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
 
 export class ExhibitManager {
     public currentExhibit = 'professional';
@@ -128,18 +127,17 @@ export class ExhibitManager {
                 this.noteBoxMap.set(nb.id, nb);
             }
         } else if (id === 'stress') {
-            const grid = 16;
+            const grid = 64; // 64x64 = 4096 areas
             const spacing = 15;
             for (let i = 0; i < grid; i++) {
                 for (let j = 0; j < grid; j++) {
                     const area = new TextArea(this.textManager.fontData!);
-                    area.width = 500;
-                    const count = 3 + Math.floor(Math.random() * 5);
-                    let sentence = "";
-                    for(let k=0; k<count; k++) sentence += animals[Math.floor(Math.random() * animals.length)] + " ";
-                    area.text = sentence.trim();
+                    area.width = 1000;
+                    // ~250 characters per area * 4000 areas = ~1M characters
+                    area.text = "The quick brown fox jumps over the lazy dog. MSDF Text Engine is ultra fast. ".repeat(4);
                     area.wordWrap = true;
-                    (area as any).worldPos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 10);
+                    const pos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 50);
+                    (area as any).worldPos = pos;
                     (area as any).cachedLayout = area.computeLayout();
                     this.stressAreas.push(area);
                 }

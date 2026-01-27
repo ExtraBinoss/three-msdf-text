@@ -1,104 +1,78 @@
-# MSDF Text Engine API Documentation
+# 📖 MSDF Text Engine API Reference
 
-## TextManager
+This document provides a detailed overview of the core classes and methods available in the MSDF Text Engine library.
 
-The `TextManager` class is the core component for rendering MSDF text using Three.js `InstancedMesh`. It handles efficient batching of characters.
+## 🏗️ Core Rendering
 
-### Constructor
+### `TextManager`
+The central engine that manages the GPU `InstancedMesh`.
 
-```typescript
-const textManager = new TextManager(scene: THREE.Scene, maxChars: number = 1000);
-```
-
--   **scene**: The Three.js scene where the text mesh will be added.
--   **maxChars**: The maximum number of characters that can be displayed at once. This sets the size of the instance buffer. Default is `1000`.
-
-### Properties
-
-#### `textScale: number`
-Controls the overall size of the rendered text. Maps pixel-based font metrics to world units. Default is `0.01`.
-
-### Methods
-
-#### `load(fontUrl: string, textureUrl: string): Promise<void>`
-
-Loads the necessary MSDF font assets.
-
--   **fontUrl**: URL to the MSDF JSON file (e.g., `/font.json`).
--   **textureUrl**: URL to the MSDF texture atlas (e.g., `/font.png`).
--   **Returns**: A `Promise` that resolves when assets are loaded.
-
-```typescript
-await textManager.load('/assets/font.json', '/assets/font.png');
-```
-
-#### `setText(text: string): void`
-
-Updates the text displayed by the mesh.
-
--   **text**: The string of text to render. It supports newlines `\n`.
-
-```typescript
-textManager.setText("Hello World!\nmultiline text");
-```
-
-#### `getProfile(): object`
-
-Returns an object containing internal profiling statistics.
-
--   **visibleCharacters**: Number of characters currently rendered.
--   **bufferCapacity**: Maximum capacity of the instance buffer.
--   **geometryVertices**: Total vertices (visible * 4).
--   **lastUpdateDuration**: Time taken for the last `setText` update in milliseconds.
-
-```typescript
-const stats = textManager.getProfile();
-console.log(`Rendering ${stats.visibleCharacters} chars in ${stats.lastUpdateDuration}ms`);
-```
-
-## TextArea
-
-The `TextArea` class handles text layout and word wrapping logic. It is agnostic of Three.js and can be used to compute glyph positions for any renderer.
-
-### Constructor
-```typescript
-const textArea = new TextArea(fontData: FontData);
-```
-
-### Properties
-- **width**: The width of the text area in font pixels. Text will wrap at this boundary.
-- **height**: The height of the text area. Useful for overflow checks.
-- **text**: The string content to layout.
-- **wordWrap**: Boolean to enable/disable automatic word wrapping. Default `true`.
-- **lineSpacing**: Multiplier for line height. Default `1.0`.
-
-### Methods
-#### `computeLayout(): GlyphLayout[]`
-Returns an array of `{ char, x, y }` objects representing the calculated position for every character in the text.
+- `constructor(scene: THREE.Scene, initialCapacity: number = 100)`
+  - Initializes the engine. Buffer grows dynamically with 20% headroom.
+- `async load(fontUrl: string, textureUrl: string): Promise<void>`
+  - Loads the MSDF font data and texture atlas.
+- `renderGlyphs(glyphs: GlyphLayout[])`
+  - Re-fetches all glyph positions into the GPU buffer.
+  - **Note**: Call this once per frame with a flattened array of all layouts.
+- `getProfile()`
+  - Returns performance metrics (instance count, buffer capacity, GPU update time).
 
 ---
 
-## Performance & Rendering Info
+## 📦 UI Components
 
-The engine uses a single draw call per `TextManager` instance (via `InstancedMesh`).
--   **Draw Calls**: 1 (plus background/other scene objects).
--   **Triangles**: 2 * `instanceCount` (each character is a quad).
--   **Shaders**: Uses custom MSDF shaders with supersampling for high-quality rendering at all scales.
+### `BoxManager`
+Manages the rectangular backgrounds for NoteBoxes using a highly optimized "Stable ID" system.
 
-## Usage Example
+- `addBox(pos, scale, col1, col2, alpha, mode): number`
+  - Returns a `logicalId` that is stable even when other boxes are deleted.
+- `removeBox(logicalId: number)`
+  - O(1) removal using swap-with-last strategy.
+- `updateBox(logicalId, ...)`
+  - Updates an existing box's properties.
 
-```typescript
-import * as THREE from 'three';
-import { TextManager } from './TextManager';
+### `NoteBox`
+A high-level container combining backgrounds and text areas.
 
-// Setup Three.js scene...
-const scene = new THREE.Scene();
+- `constructor(textManager, boxManager, id?: string)`
+  - `id` is a stable string for easy referencing.
+- `setSize(w, h)`
+  - Resizes the box. Support `autoHeight` for dynamic expansion.
+- `getLayout(scale): GlyphLayout[]`
+  - Returns transformed glyphs for the `TextManager`.
+- `getCaretWorldPosition(part, scale)`
+  - Translates caret index to 3D coordinates.
+- `getLocalPoint(part, worldPoint, scale)`
+  - Translates hit points to local character indices.
 
-// Initialize TextManager
-const textManager = new TextManager(scene, 5000);
+### `TextArea`
+The layout engine for word-wrapping and style application.
 
-// Load assets and set text
-textManager.load('/font.json', '/font.png').then(() => {
-    textManager.setText("Initial Text");
-});
-```
+- `computeLayout(): GlyphLayout[]`
+  - Runs the logical layout algorithm.
+- `getIndexAtPos(x, y): number`
+  - Returns character index under a local coordinate.
+- `styles: TextStyle[]`
+  - Array of color/style overrides per range.
+
+---
+
+## ✨ Effects & Interactions
+
+### `TextEffects`
+Utility class for animating glyph colors.
+
+- `updateRainbow(area, start, end, speed)`
+  - Cycles colors in the specified range.
+- `applyColor(area, start, end, color)`
+  - Static color override for a range.
+
+### `TextEditor`
+Handles global keyboard events and manages the blinking caret.
+
+- `focus(area: TextArea | null, index?: number)`
+  - Activates text input for a specific area.
+- `setColor(color)`
+  - Sets caret color.
+- `update(deltaTime)`
+  - Handles the blink timer.
