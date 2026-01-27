@@ -37,7 +37,7 @@ const textManager = new TextManager(scene);
 const textEffects = new TextEffects();
 
 // State
-let currentExhibit = 'showcase';
+let currentExhibit = 'professional';
 const clock = new THREE.Clock();
 const noteBoxes: NoteBox[] = [];
 const stressAreas: TextArea[] = [];
@@ -46,7 +46,6 @@ const stressAreas: TextArea[] = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let resizingBox: NoteBox | null = null;
-let lastMouseWorld = new THREE.Vector3();
 
 const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
 
@@ -89,7 +88,47 @@ const clearScene = () => {
 const initExhibit = (id: string) => {
     clearScene();
     
-    if (id === 'showcase') {
+    if (id === 'professional') {
+        // PRIORITY: Corporate / Professional Look
+        const corp1 = new NoteBox(textManager, boxManager);
+        corp1.setPosition(-12, 5, 0);
+        corp1.setSize(10, 6, 1.0);
+        corp1.titleArea.text = "BOX 01";
+        corp1.bodyArea.text = "Standard corporate style NoteBox.\n\nDouble click to change the data feed. Resize me below.";
+        corp1.setStyle({
+            headerColor1: 0x1e293b, headerColor2: 0x334155, headerGradientMode: GradientMode.HORIZONTAL,
+            bodyColor1: 0x0f172a, bodyAlpha: 0.95
+        });
+        noteBoxes.push(corp1);
+
+        const simple = new NoteBox(textManager, boxManager);
+        simple.setPosition(2, 5, 0);
+        simple.setSize(10, 6, 1.0);
+        simple.titleArea.text = "SIMPLE LAYOUT";
+        simple.bodyArea.text = "A clean, basic NoteBox without gradients or transparency.\n\nHeader: Solid Light Gray\nBody: Solid Dark Gray";
+        simple.setStyle({
+            headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
+            bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
+            bodyAlpha: 1.0
+        });
+        noteBoxes.push(simple);
+
+        const palette = new NoteBox(textManager, boxManager);
+        palette.setPosition(-12, -2, 0);
+        palette.setSize(10, 5, 1.0);
+        palette.titleArea.text = "COLOR SAMPLES";
+        palette.bodyArea.text = "Base Colors Supported:\n" +
+                               "• Slate: #1e293b\n" +
+                               "• Zinc: #18181b\n" +
+                               "• Neutral: #171717\n" +
+                               "• Custom: Any Hex value";
+        palette.setStyle({
+             headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
+             bodyColor1: 0x18181b, bodyAlpha: 1.0
+        });
+        noteBoxes.push(palette);
+
+    } else if (id === 'showcase') {
         const hero = new NoteBox(textManager, boxManager);
         hero.setPosition(-7, 5, 0);
         hero.setSize(14, 2.5, 1.0);
@@ -124,29 +163,6 @@ const initExhibit = (id: string) => {
         });
         noteBoxes.push(hacker);
 
-    } else if (id === 'professional') {
-        const corp1 = new NoteBox(textManager, boxManager);
-        corp1.setPosition(-12, 5, 0);
-        corp1.setSize(10, 6, 1.0);
-        corp1.titleArea.text = "CORPORATE DASHBOARD";
-        corp1.bodyArea.text = "Standard corporate style NoteBox.\n\nDouble click to change the data feed.";
-        corp1.setStyle({
-            headerColor1: 0x1e293b, headerColor2: 0x334155, headerGradientMode: GradientMode.HORIZONTAL,
-            bodyColor1: 0x0f172a, bodyAlpha: 0.95
-        });
-        noteBoxes.push(corp1);
-
-        const simple = new NoteBox(textManager, boxManager);
-        simple.setPosition(2, 5, 0);
-        simple.setSize(10, 6, 1.0);
-        simple.titleArea.text = "SIMPLE LAYOUT";
-        simple.bodyArea.text = "A clean, basic NoteBox without gradients or transparency.\n\nHeader: Solid Light Gray\nBody: Solid Dark Gray";
-        simple.setStyle({
-            headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
-            bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
-            bodyAlpha: 1.0
-        });
-        noteBoxes.push(simple);
     } else if (id === 'notebox') {
         for (let i = 0; i < 3; i++) {
             const nb = new NoteBox(textManager, boxManager);
@@ -206,7 +222,7 @@ const handleInteraction = () => {
         }
     });
 
-    renderer.domElement.addEventListener('mousedown', (e) => {
+    renderer.domElement.addEventListener('mousedown', () => {
         raycaster.setFromCamera(mouse, camera);
         const mesh = boxManager.getMesh();
         const intersects = raycaster.intersectObject(mesh);
@@ -226,7 +242,7 @@ const handleInteraction = () => {
         controls.enabled = true;
     });
 
-    renderer.domElement.addEventListener('dblclick', (e) => {
+    renderer.domElement.addEventListener('dblclick', () => {
         raycaster.setFromCamera(mouse, camera);
         const mesh = boxManager.getMesh();
         const intersects = raycaster.intersectObject(mesh);
@@ -251,30 +267,32 @@ const handleInteraction = () => {
 textManager.load('/font.json', '/font.png').then(() => {
     setupUI();
     handleInteraction();
-    setExhibit('showcase');
+    setExhibit('professional');
 
     function animate() {
         requestAnimationFrame(animate);
         const deltaTime = clock.getDelta();
-        const elapsedTime = clock.getElapsedTime();
         controls.update();
 
         let allLayouts: any[] = [];
         const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
         const defaultTitleColor = isLightBg ? new THREE.Color(0,0,0) : new THREE.Color(1,1,1);
 
-        if (currentExhibit === 'showcase' && noteBoxes.length >= 2) {
+        if (currentExhibit === 'professional') {
+             noteBoxes.forEach(nb => textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor));
+             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'showcase' && noteBoxes.length >= 2) {
             textEffects.update(deltaTime);
             noteBoxes.forEach((nb, i) => {
                 if (i === 0) textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
                 else textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor);
             });
             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
-        } else if (currentExhibit === 'professional') {
-             noteBoxes.forEach(nb => textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor));
-             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
-        } else if (currentExhibit === 'notebox' || currentExhibit === 'showcase') {
-             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'notebox') {
+            for (const nb of noteBoxes) {
+                textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, new THREE.Color(0x000000));
+            }
+            allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
         } else if (currentExhibit === 'stress') {
             textEffects.update(deltaTime);
             for (const area of stressAreas) {
