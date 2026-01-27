@@ -6,6 +6,7 @@ import { TextEffects } from './TextEffects.ts'
 import { NoteBox } from './NoteBox.ts'
 import { BoxManager, GradientMode } from './BoxManager.ts'
 import { TextArea } from './TextArea.ts'
+import { TextEditor } from './TextEditor.ts'
 
 /**
  * MSDF TEXT ENGINE - INTERACTIVE PLAYGROUND
@@ -35,6 +36,7 @@ controls.mouseButtons = {
 const boxManager = new BoxManager(scene, 2000);
 const textManager = new TextManager(scene);
 const textEffects = new TextEffects();
+const textEditor = new TextEditor(scene);
 
 // State
 let currentExhibit = 'professional';
@@ -46,6 +48,8 @@ const stressAreas: TextArea[] = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let resizingBox: NoteBox | null = null;
+let editingBox: NoteBox | null = null;
+let editingPart: 'header' | 'body' | null = null;
 
 const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
 
@@ -83,29 +87,29 @@ const clearScene = () => {
     boxManager.clear();
     noteBoxes.length = 0;
     stressAreas.length = 0;
+    textEditor.focus(null);
 };
 
 const initExhibit = (id: string) => {
     clearScene();
     
     if (id === 'professional') {
-        // PRIORITY: Corporate / Professional Look
         const corp1 = new NoteBox(textManager, boxManager);
         corp1.setPosition(-12, 5, 0);
-        corp1.setSize(10, 6, 1.0);
+        corp1.setSize(10, 5, 1.0);
         corp1.titleArea.text = "BOX 01";
-        corp1.bodyArea.text = "Standard corporate style NoteBox.\n\nDouble click to change the data feed. Resize me below.";
+        corp1.bodyArea.text = "Standard Slate Theme\n\nHeader: #334155\nBody: #0f172a\n\nClick to type.";
         corp1.setStyle({
-            headerColor1: 0x1e293b, headerColor2: 0x334155, headerGradientMode: GradientMode.HORIZONTAL,
-            bodyColor1: 0x0f172a, bodyAlpha: 0.95
+            headerColor1: 0x334155, headerColor2: 0x334155, headerGradientMode: GradientMode.NONE,
+            bodyColor1: 0x0f172a, bodyAlpha: 1.0, bodyGradientMode: GradientMode.NONE,
         });
         noteBoxes.push(corp1);
 
         const simple = new NoteBox(textManager, boxManager);
         simple.setPosition(2, 5, 0);
-        simple.setSize(10, 6, 1.0);
+        simple.setSize(10, 5, 1.0);
         simple.titleArea.text = "SIMPLE LAYOUT";
-        simple.bodyArea.text = "A clean, basic NoteBox without gradients or transparency.\n\nHeader: Solid Light Gray\nBody: Solid Dark Gray";
+        simple.bodyArea.text = "The classic Minimalist theme.\n\nHeader: Solid #666666\nBody: Solid #222222\n\nDouble click to edit.";
         simple.setStyle({
             headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
             bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
@@ -117,7 +121,7 @@ const initExhibit = (id: string) => {
         palette.setPosition(-12, -2, 0);
         palette.setSize(10, 5, 1.0);
         palette.titleArea.text = "COLOR SAMPLES";
-        palette.bodyArea.text = "Base Colors Supported:\n" +
+        palette.bodyArea.text = "Enterprise Palette:\n" +
                                "• Slate: #1e293b\n" +
                                "• Zinc: #18181b\n" +
                                "• Neutral: #171717\n" +
@@ -127,13 +131,12 @@ const initExhibit = (id: string) => {
              bodyColor1: 0x18181b, bodyAlpha: 1.0
         });
         noteBoxes.push(palette);
-
     } else if (id === 'showcase') {
         const hero = new NoteBox(textManager, boxManager);
         hero.setPosition(-7, 5, 0);
         hero.setSize(14, 2.5, 1.0);
-        hero.titleArea.text = "EDIT ME (DBL CLICK)";
-        hero.bodyArea.text = "Double click headers or bodies to edit text. Drag the bottom right handle to resize.";
+        hero.titleArea.text = "TYPE FREELY";
+        hero.bodyArea.text = "Double click here. You can now use backspace, arrows, and enter just like a real text editor.";
         hero.setStyle({
             headerColor1: 0x444444, headerColor2: 0x333333,
             bodyColor1: 0x222222, bodyAlpha: 0.95
@@ -156,7 +159,7 @@ const initExhibit = (id: string) => {
         hacker.setPosition(1, 0, 0);
         hacker.setSize(9, 6.5, 1.2);
         hacker.titleArea.text = "TERMINAL GLITCH";
-        hacker.bodyArea.text = "Status: Interactive\nResize handle at bottom right.\n\nDouble click to re-simulate encryption protocols.";
+        hacker.bodyArea.text = "Status: Interactive\nType into the terminal...\n\nEverything is batched on the GPU.";
         hacker.setStyle({
             headerColor1: 0x00ff00, headerColor2: 0x008800,
             bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
@@ -169,7 +172,7 @@ const initExhibit = (id: string) => {
             nb.setPosition(-12 + i * 9, 2 - i * 2, i * -1);
             nb.setSize(8, 6, 1.2);
             nb.titleArea.text = `BOX ${i+1}`;
-            nb.bodyArea.text = `Interactive layout unit.\n\nResize me using the handle!`;
+            nb.bodyArea.text = `Real-time text editing enabled.\n\nDouble click to focus.`;
             noteBoxes.push(nb);
         }
     } else if (id === 'stress') {
@@ -252,14 +255,16 @@ const handleInteraction = () => {
             const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
             if (box) {
                 const part = box.getPart(instanceId);
-                if (part === 'header') {
-                    const newTitle = window.prompt("New Title:", box.titleArea.text);
-                    if (newTitle !== null) box.titleArea.text = newTitle;
-                } else if (part === 'body') {
-                    const newBody = window.prompt("New Body:", box.bodyArea.text);
-                    if (newBody !== null) box.bodyArea.text = newBody;
+                if (part === 'header' || part === 'body') {
+                    editingBox = box;
+                    editingPart = part;
+                    textEditor.focus(part === 'header' ? box.titleArea : box.bodyArea);
                 }
             }
+        } else {
+            textEditor.focus(null);
+            editingBox = null;
+            editingPart = null;
         }
     });
 };
@@ -309,6 +314,14 @@ textManager.load('/font.json', '/font.png').then(() => {
         }
 
         textManager.renderGlyphs(allLayouts);
+
+        // UPDATE CARET POSITION
+        if (editingBox && editingPart) {
+            textEditor.update(deltaTime);
+            const caretWorld = editingBox.getCaretWorldPosition(editingPart, textManager.textScale);
+            textEditor.setCaretPosition(caretWorld.x, caretWorld.y, caretWorld.z, textManager.textScale * textManager.fontData!.common.lineHeight);
+        }
+
         renderer.render(scene, camera);
 
         const profile = textManager.getProfile();

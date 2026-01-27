@@ -150,4 +150,28 @@ export class NoteBox {
 
         return [...titleGlyphs, ...bodyGlyphs];
     }
+
+    /**
+     * Translates local caret position to world space for the editor.
+     */
+    getCaretWorldPosition(type: 'header' | 'body', textScale: number) {
+        const area = type === 'header' ? this.titleArea : this.bodyArea;
+        const local = area.lastCaretPos;
+        
+        let vertOffset = 0;
+        if (type === 'header') {
+            const fontLineHeight = area.fontData.common.lineHeight;
+            const headerHeightFont = this.headerHeight / textScale;
+            vertOffset = (headerHeightFont - fontLineHeight) / 2;
+        } else {
+            const bodyPadding = 0.2;
+            vertOffset = (this.headerHeight + bodyPadding) / textScale;
+        }
+
+        return {
+            x: this.position.x + (local.x + 0.25 / textScale) * textScale,
+            y: this.position.y + (local.y - vertOffset) * textScale,
+            z: this.position.z + 0.05
+        };
+    }
 }

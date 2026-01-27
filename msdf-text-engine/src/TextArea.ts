@@ -26,6 +26,10 @@ export class TextArea {
     public lineSpacing: number = 1.0;
     public styles: TextStyle[] = [];
     
+    // Caret state
+    public caretIndex: number = 0;
+    public lastCaretPos: { x: number, y: number } = { x: 0, y: 0 };
+    
     public fontData: FontData;
     private charMap: Map<string, Char> = new Map();
 
@@ -47,6 +51,12 @@ export class TextArea {
         
         // Track the current character's index in the original string
         let stringPointer = 0;
+        
+        // Reset caret pos to start of text
+        this.lastCaretPos = { x: 0, y: 0 };
+        if (this.caretIndex === 0) {
+            this.lastCaretPos = { x: 0, y: 0 };
+        }
 
         for (let l = 0; l < lines.length; l++) {
             const line = lines[l];
@@ -56,14 +66,9 @@ export class TextArea {
             for (const word of words) {
                 // Calculate word width
                 let wordWidth = 0;
-                const wordChars: Char[] = [];
-                
                 for (const charStr of word) {
                     const charData = this.charMap.get(charStr);
-                    if (charData) {
-                        wordWidth += charData.xadvance;
-                        wordChars.push(charData);
-                    }
+                    if (charData) wordWidth += charData.xadvance;
                 }
 
                 // Word wrap check
@@ -77,16 +82,22 @@ export class TextArea {
                     const charStr = word[i];
                     const charData = this.charMap.get(charStr);
                     
+                    const currentIndex = stringPointer + i;
+                    
+                    // Update Caret Position if we are at the caret index
+                    if (currentIndex === this.caretIndex) {
+                        this.lastCaretPos = { x: cursorX, y: cursorY };
+                    }
+
                     if (charData) {
                         // Check bounds (simple efficient clipping)
                         if (Math.abs(cursorY) > this.height) {
+                            // Even if clipped, still handle caret if it's beyond this point
                             return glyphs; 
                         }
 
                         // Determine color based on string index
                         let charColor = new THREE.Color(1, 1, 1);
-                        const currentIndex = stringPointer + i;
-
                         for (const style of this.styles) {
                             if (currentIndex >= style.start && currentIndex < style.end) {
                                 if (style.color) charColor = style.color;
@@ -103,14 +114,21 @@ export class TextArea {
                     }
                 }
                 
-                // Advance the string pointer by the length of the word (including whitespace)
                 stringPointer += word.length;
             }
+
+            // End of line caret check
+            if (stringPointer === this.caretIndex) {
+                this.lastCaretPos = { x: cursorX, y: cursorY };
+            }
             
-            // Move to next line and skip the newline character in the pointer
             cursorX = 0;
             cursorY -= baseLineHeight;
-            stringPointer += 1; // For the '\n' we split on
+            stringPointer += 1; // for '\n'
+
+            if (stringPointer === this.caretIndex) {
+                this.lastCaretPos = { x: 0, y: cursorY };
+            }
         }
 
         return glyphs;
