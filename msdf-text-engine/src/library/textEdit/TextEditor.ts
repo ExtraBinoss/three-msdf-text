@@ -73,6 +73,17 @@ export class TextEditor {
     private handleKeyDown(e: KeyboardEvent) {
         if (!this.activeArea || !this.isFocused) return;
 
+        // Clipboard Paste
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            e.preventDefault();
+            navigator.clipboard.readText().then(text => {
+                if (text) this.insertText(text);
+            }).catch(err => {
+                console.error('Failed to read clipboard:', err);
+            });
+            return;
+        }
+
         if (e.key === 'Backspace') {
             const text = this.activeArea.text;
             const idx = this.activeArea.caretIndex;
