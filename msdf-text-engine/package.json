@@ -1,5 +1,5 @@
 {
-  "name": "msdf-text-engine",
+  "name": "extrabinoss-msdf-text-engine",
   "version": "1.0.0",
   "description": "High-performance MSDF text engine for Three.js",
   "type": "module",
