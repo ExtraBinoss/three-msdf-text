@@ -1,6 +1,6 @@
 # ✒️ MSDF Text Engine for Three.js
 
-[![Deploy to GitHub Pages](https://github.com/ExtraBinoss/text-msdf/actions/workflows/deploy.yml/badge.svg)](https://github.com/ExtraBinoss/text-msdf/actions/workflows/deploy.yml)
+[![Deploy to GitHub Pages](https://github.com/ExtraBinoss/three-msdf-text/actions/workflows/deploy.yml/badge.svg)](https://github.com/ExtraBinoss/three-msdf-text/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A ultra-high-performance, professional-grade text rendering engine for Three.js. This library leverages **Multi-channel Signed Distance Fields (MSDF)** and **Hardware Instancing** to render millions of crisp, interactive characters in a single draw call.
@@ -38,8 +38,8 @@ Animations (Rotation, Scale, Offset) are applied per-character by updating the `
 ### Installation
 
 ```bash
-git clone https://github.com/ExtraBinoss/text-msdf.git
-cd text-msdf/msdf-text-engine
+git clone https://github.com/ExtraBinoss/three-msdf-text.git
+cd three-msdf-text/msdf-text-engine
 npm install
 npm run dev
 ```
