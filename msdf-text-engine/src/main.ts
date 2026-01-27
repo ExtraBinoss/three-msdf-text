@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TextManager } from './TextManager.ts'
 import { NoteBox } from './NoteBox.ts'
+import { BoxManager } from './BoxManager.ts'
 
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x1a1a1a) // Dark grey
@@ -19,15 +20,16 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.target.set(4, -2, 0)
 
-// Text Manager
-const textManager = new TextManager(scene, 5000)
+// Managers
+const boxManager = new BoxManager(scene, 100);
+const textManager = new TextManager(scene, 5000);
+
 textManager.load('/font.json', '/font.png').then(() => {
     // Create Note Box
-    const note = new NoteBox(textManager);
+    const note = new NoteBox(textManager, boxManager);
     note.setSize(10, 8, 1.2);
-    note.group.position.set(0, 0, 0);
-    scene.add(note.group);
-
+    note.setPosition(0, 0, 0);
+    
     note.titleArea.text = "NOTELOG v1.0";
     note.bodyArea.text = "This is a NoteBox component.\n\n" +
                          "It features a dedicated Title Bar and a main body area with automatic word wrapping. " +
@@ -36,6 +38,27 @@ textManager.load('/font.json', '/font.png').then(() => {
 
     // Render text to the manager
     textManager.renderGlyphs(note.getLayout(textManager.textScale));
+
+    // Demo: Create a second box to prove batching
+    const note2 = new NoteBox(textManager, boxManager);
+    note2.setSize(8, 6, 1.2);
+    note2.setPosition(12, 1, -2);
+    note2.titleArea.text = "BATCHING TEST";
+    note2.bodyArea.text = "This second box is drawn in the same draw calls as the first one.\n" +
+                          "1 Draw call for all boxes.\n" +
+                          "1 Draw call for all text.";
+    
+    // We append the new glyphs to the render list
+    // Ideally we would manage a list of all renderable objects, but for this demo manual calling is fine
+    // Note: renderGlyphs resets the mesh, so we need to batch them ourselves or call addGlyphs?
+    // Current TextManager.renderGlyphs resets everything. 
+    // Let's just combine them for the demo.
+    const layouts = [
+        ...note.getLayout(textManager.textScale),
+        ...note2.getLayout(textManager.textScale)
+    ];
+    textManager.renderGlyphs(layouts);
+
 }).catch(err => {
     console.error('Failed to load font:', err)
 })
