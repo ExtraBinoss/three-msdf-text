@@ -32,6 +32,8 @@ export class NoteBox {
     public width: number = 8;
     public height: number = 6;
     public autoHeight: boolean = true;
+    public autoWidth: boolean = true;
+    public minWidth: number = 4;
     private headerHeight: number = 1.2;
 
     constructor(textManager: TextManager, boxManager: BoxManager, id?: string) {
@@ -150,6 +152,22 @@ export class NoteBox {
     }
 
     getLayout(textScale: number) {
+        // --- Auto Width Check (Title driven) ---
+        if (this.autoWidth) {
+            const oldWrap = this.titleArea.wordWrap;
+            this.titleArea.wordWrap = false; // Never wrap title if autoWidth is on
+            this.titleArea.width = 999999;
+            this.titleArea.computeLayout();
+            const contentW = this.titleArea.getContentWidth() * textScale;
+            this.titleArea.wordWrap = oldWrap;
+
+            const targetW = Math.max(this.minWidth, contentW + 1.0); // + padding
+            if (this.width < targetW) {
+                this.width = targetW;
+                this.updateGeometry();
+            }
+        }
+
         this.titleArea.width = (this.width - 0.5) / textScale;
         this.titleArea.height = (this.headerHeight - 0.1) / textScale;
         
@@ -165,7 +183,7 @@ export class NoteBox {
             const contentH = this.bodyArea.getContentHeight() * textScale;
             const targetH = Math.max(2, contentH + this.headerHeight + 0.5);
             
-            if (Math.abs(this.height - targetH) > 0.05) {
+            if (this.height < targetH) {
                 this.height = targetH;
                 this.updateGeometry();
             }

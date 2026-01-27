@@ -5,6 +5,8 @@
 
 A ultra-high-performance, professional-grade text rendering engine for Three.js. This library leverages **Multi-channel Signed Distance Fields (MSDF)** and **Hardware Instancing** to render millions of crisp, interactive characters in a single draw call.
 
+## 🎮 [Live Interactive Demo](https://extrabinoss.github.io/three-msdf-text/)
+
 This package is not uploaded to NPM. Do whatever you want with it.
 
 This library is the base for the rendering of NoteBoxes in our Digital Art creation website [Nodl](https://www.nodl.dev)

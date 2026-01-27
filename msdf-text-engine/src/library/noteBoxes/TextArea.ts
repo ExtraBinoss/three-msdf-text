@@ -169,6 +169,18 @@ export class TextArea {
     }
 
     /**
+     * Returns the maximum width consumed by the text layout.
+     */
+    getContentWidth(): number {
+        if (this.visualMap.length === 0) return 0;
+        let maxX = 0;
+        for (const entry of this.visualMap) {
+            maxX = Math.max(maxX, entry.x);
+        }
+        return maxX;
+    }
+
+    /**
      * Finds the character index closest to a given local XY coordinate.
      * Uses the cached visualMap from the last computeLayout run.
      */
