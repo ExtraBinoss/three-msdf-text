@@ -154,16 +154,34 @@ const initExhibit = (id: string) => {
 
         const palette = new NoteBox(textManager, boxManager);
         palette.setPosition(-12, -2, 0);
-        palette.setSize(22, 5, 1.0);
-        palette.titleArea.text = "UI COLOR PALETTE SAMPLES";
-        palette.bodyArea.text = "Supporting any HEX color with perfect precision.\n" +
-                               "From solid vibrant tones to subtle dark modes.";
+        palette.setSize(10, 5, 1.0);
+        palette.titleArea.text = "COLOR SAMPLES";
+        palette.bodyArea.text = "Base Colors Supported:\n" +
+                               "• Slate: #1e293b\n" +
+                               "• Zinc: #18181b\n" +
+                               "• Neutral: #171717\n" +
+                               "• Custom: Any Hex value";
         palette.setStyle({
              headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
-             bodyColor1: 0x171717, bodyAlpha: 1.0
+             bodyColor1: 0x18181b, bodyAlpha: 1.0
         });
         noteBoxes.push(palette);
 
+        // SIMPLE LAYOUT: No gradients, no flashy stuff
+        const simple = new NoteBox(textManager, boxManager);
+        simple.setPosition(0, -2, 0);
+        simple.setSize(10, 5, 1.0);
+        simple.titleArea.text = "SIMPLE LAYOUT";
+        simple.bodyArea.text = "A clean, basic NoteBox without gradients or transparency.\n\n" +
+                              "Header: Solid Light Gray\n" +
+                              "Body: Solid Dark Gray\n" +
+                              "Text: Solid White";
+        simple.setStyle({
+            headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
+            bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
+            bodyAlpha: 1.0
+        });
+        noteBoxes.push(simple);
     } else if (id === 'notebox') {
         for (let i = 0; i < 3; i++) {
             const nb = new NoteBox(textManager, boxManager);
