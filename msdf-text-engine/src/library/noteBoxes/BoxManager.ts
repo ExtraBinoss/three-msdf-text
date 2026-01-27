@@ -39,7 +39,8 @@ export class BoxManager {
         
         this.material = new THREE.MeshBasicMaterial({ 
             transparent: true,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            depthWrite: true
         });
 
         this.mesh = new THREE.InstancedMesh(geometry, this.material, maxBoxes);

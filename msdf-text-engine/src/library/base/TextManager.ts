@@ -41,8 +41,7 @@ export class TextManager {
                 uMap: { value: null }
             },
             transparent: true,
-            side: THREE.DoubleSide,
-            depthTest: false
+            side: THREE.DoubleSide
         });
 
         this.mesh = this.createMesh(this.capacity);
