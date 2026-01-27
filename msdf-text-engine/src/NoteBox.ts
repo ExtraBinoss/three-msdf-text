@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TextArea } from './TextArea.ts';
 import { TextManager } from './TextManager.ts';
-import { BoxManager } from './BoxManager.ts';
+import { BoxManager, GradientMode } from './BoxManager.ts';
 
 /**
  * A UI component that manages a background box, a title bar, 
@@ -16,10 +16,12 @@ export class NoteBox {
     public headerColor1: THREE.Color = new THREE.Color(0x00d4ff);
     public headerColor2: THREE.Color = new THREE.Color(0x00d4ff);
     public headerAlpha: number = 1.0;
+    public headerGradientMode: GradientMode = GradientMode.VERTICAL;
 
     public bodyColor1: THREE.Color = new THREE.Color(0x0a1012);
     public bodyColor2: THREE.Color = new THREE.Color(0x0a1012);
     public bodyAlpha: number = 0.9;
+    public bodyGradientMode: GradientMode = GradientMode.VERTICAL;
 
     private boxManager: BoxManager;
     private headerId: number;
@@ -37,8 +39,8 @@ export class NoteBox {
         this.bodyArea = new TextArea(textManager.fontData);
         
         // Initialize with default values
-        this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.headerColor1, this.headerColor2, this.headerAlpha);
-        this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.bodyColor1, this.bodyColor2, this.bodyAlpha);
+        this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
+        this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.bodyColor1, this.bodyColor2, this.bodyAlpha, this.bodyGradientMode);
 
         this.updateGeometry();
     }
@@ -54,7 +56,7 @@ export class NoteBox {
         // Header
         const headerPos = this.position.clone().add(new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01));
         this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), 
-            this.headerColor1, this.headerColor2, this.headerAlpha);
+            this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
 
         // Body
         const bodyH = this.height - this.headerHeight;
@@ -62,7 +64,7 @@ export class NoteBox {
         const bodyPos = this.position.clone().add(new THREE.Vector3(this.width / 2, bodyY, 0));
         
         this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), 
-            this.bodyColor1, this.bodyColor2, this.bodyAlpha);
+            this.bodyColor1, this.bodyColor2, this.bodyAlpha, this.bodyGradientMode);
     }
 
     setPosition(x: number, y: number, z: number) {
@@ -74,17 +76,21 @@ export class NoteBox {
         headerColor1?: number | THREE.Color,
         headerColor2?: number | THREE.Color,
         headerAlpha?: number,
+        headerGradientMode?: GradientMode,
         bodyColor1?: number | THREE.Color,
         bodyColor2?: number | THREE.Color,
-        bodyAlpha?: number
+        bodyAlpha?: number,
+        bodyGradientMode?: GradientMode
     }) {
         if (config.headerColor1 !== undefined) this.headerColor1 = this.toColor(config.headerColor1);
         if (config.headerColor2 !== undefined) this.headerColor2 = this.toColor(config.headerColor2);
         if (config.headerAlpha !== undefined) this.headerAlpha = config.headerAlpha;
+        if (config.headerGradientMode !== undefined) this.headerGradientMode = config.headerGradientMode;
 
         if (config.bodyColor1 !== undefined) this.bodyColor1 = this.toColor(config.bodyColor1);
         if (config.bodyColor2 !== undefined) this.bodyColor2 = this.toColor(config.bodyColor2);
         if (config.bodyAlpha !== undefined) this.bodyAlpha = config.bodyAlpha;
+        if (config.bodyGradientMode !== undefined) this.bodyGradientMode = config.bodyGradientMode;
 
         this.updateGeometry();
     }

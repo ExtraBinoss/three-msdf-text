@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TextManager } from './TextManager.ts'
 import { TextEffects } from './TextEffects.ts'
 import { NoteBox } from './NoteBox.ts'
-import { BoxManager } from './BoxManager.ts'
+import { BoxManager, GradientMode } from './BoxManager.ts'
 import { TextArea } from './TextArea.ts'
 
 /**
@@ -12,7 +12,7 @@ import { TextArea } from './TextArea.ts'
  */
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x050505)
+scene.background = new THREE.Color(0x0a0a0a)
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
 camera.position.set(0, 0, 15)
@@ -42,6 +42,8 @@ const clock = new THREE.Clock();
 const noteBoxes: NoteBox[] = [];
 const stressAreas: TextArea[] = [];
 
+const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
+
 const set3D = (enabled: boolean) => {
     controls.enableRotate = enabled;
     controls.mouseButtons = {
@@ -59,9 +61,16 @@ const set3D = (enabled: boolean) => {
     }
 };
 
+const setBG = (color: number, id: string) => {
+    scene.background = new THREE.Color(color);
+    ['bg-dark', 'bg-steel', 'bg-light'].forEach(bid => {
+        document.getElementById(bid)?.classList.toggle('active', bid === id);
+    });
+};
+
 const setExhibit = (id: string) => {
     currentExhibit = id;
-    ['ex-showcase', 'ex-notebox', 'ex-stress'].forEach(eid => {
+    ['ex-showcase', 'ex-professional', 'ex-notebox', 'ex-stress'].forEach(eid => {
         document.getElementById(eid)?.classList.toggle('active', eid === `ex-${id}`);
     });
     initExhibit(id);
@@ -73,21 +82,19 @@ const clearScene = () => {
     stressAreas.length = 0;
 };
 
-const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
-
 const initExhibit = (id: string) => {
     clearScene();
     
     if (id === 'showcase') {
+        // Hero: Minimalist Gray / Slate Theme
         const hero = new NoteBox(textManager, boxManager);
         hero.setPosition(-7, 5, 0);
         hero.setSize(14, 2.5, 1.0);
-        hero.titleArea.text = "STYLING ENGINE";
-        hero.bodyArea.text = "Independent control over transparency, colors, and gradients.";
-        // Glass-morphic Hero
+        hero.titleArea.text = "MINIMALIST VIEW";
+        hero.bodyArea.text = "Demonstrating the classic slate and gray corporate look.";
         hero.setStyle({
-            headerColor1: 0x00d4ff, headerColor2: 0x0080ff, headerAlpha: 0.8,
-            bodyColor1: 0x050505, bodyAlpha: 0.3 // Very transparent body
+            headerColor1: 0x444444, headerColor2: 0x333333, headerAlpha: 1.0,
+            bodyColor1: 0x222222, bodyAlpha: 0.95
         });
         noteBoxes.push(hero);
 
@@ -97,7 +104,9 @@ const initExhibit = (id: string) => {
         secondary.titleArea.text = "STABLE GRADIENTS";
         secondary.bodyArea.text = "The background boxes now support vertical gradients and per-instance alpha blending.";
         secondary.setStyle({
-            bodyColor1: 0x0a1012, bodyColor2: 0x1a2a32, bodyAlpha: 0.95
+            headerColor1: 0x2c3e50, headerColor2: 0x2c3e50,
+            bodyColor1: 0x1a2a32, bodyColor2: 0x0a1012, bodyGradientMode: GradientMode.VERTICAL,
+            bodyAlpha: 0.95
         });
         noteBoxes.push(secondary);
 
@@ -109,12 +118,51 @@ const initExhibit = (id: string) => {
                                "NODE: 0xDE77\n" +
                                "SYNC: ACTIVE\n" +
                                "ENCRYPTION: HIGH";
-        // Dark Terminal Theme with subtle gradient
         hacker.setStyle({
             headerColor1: 0x00ff00, headerColor2: 0x008800,
             bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
         });
         noteBoxes.push(hacker);
+
+    } else if (id === 'professional') {
+        const corp1 = new NoteBox(textManager, boxManager);
+        corp1.setPosition(-12, 5, 0);
+        corp1.setSize(10, 6, 1.0);
+        corp1.titleArea.text = "CORPORATE DASHBOARD";
+        corp1.bodyArea.text = "A clean, minimalist style using subtle horizontal gradients.\n\n" +
+                             "Header: Horizontal Blue\n" +
+                             "Body: Solid Off-Black (95% Opacity)\n\n" +
+                             "This looks professional and readable for enterprise tools.";
+        corp1.setStyle({
+            headerColor1: 0x1e293b, headerColor2: 0x334155, headerGradientMode: GradientMode.HORIZONTAL,
+            bodyColor1: 0x0f172a, bodyAlpha: 0.95
+        });
+        noteBoxes.push(corp1);
+
+        const radBox = new NoteBox(textManager, boxManager);
+        radBox.setPosition(0, 5, 0);
+        radBox.setSize(10, 6, 1.0);
+        radBox.titleArea.text = "RADIAL DESIGN";
+        radBox.bodyArea.text = "Showcasing the Radial Gradient mode.\n\n" +
+                               "The body uses a radial fade from center to edges.";
+        radBox.setStyle({
+            headerColor1: 0x0f172a, headerColor2: 0x0f172a,
+            bodyColor1: 0x1e293b, bodyColor2: 0x020617, bodyGradientMode: GradientMode.RADIAL,
+            bodyAlpha: 1.0
+        });
+        noteBoxes.push(radBox);
+
+        const palette = new NoteBox(textManager, boxManager);
+        palette.setPosition(-12, -2, 0);
+        palette.setSize(22, 5, 1.0);
+        palette.titleArea.text = "UI COLOR PALETTE SAMPLES";
+        palette.bodyArea.text = "Supporting any HEX color with perfect precision.\n" +
+                               "From solid vibrant tones to subtle dark modes.";
+        palette.setStyle({
+             headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
+             bodyColor1: 0x171717, bodyAlpha: 1.0
+        });
+        noteBoxes.push(palette);
 
     } else if (id === 'notebox') {
         for (let i = 0; i < 3; i++) {
@@ -127,32 +175,18 @@ const initExhibit = (id: string) => {
             noteBoxes.push(nb);
         }
     } else if (id === 'stress') {
-        // TURBO MODE: Highly concentrated text with random dictionary
         const grid = 16;
         const spacing = 15;
-        
         for (let i = 0; i < grid; i++) {
             for (let j = 0; j < grid; j++) {
                 const area = new TextArea(textManager.fontData!);
                 area.width = 500;
-                
-                // Build random animal sentence
                 const count = 3 + Math.floor(Math.random() * 5);
                 let sentence = "";
-                for(let k=0; k<count; k++) {
-                    sentence += animals[Math.floor(Math.random() * animals.length)] + " ";
-                }
-                
+                for(let k=0; k<count; k++) sentence += animals[Math.floor(Math.random() * animals.length)] + " ";
                 area.text = sentence.trim();
                 area.wordWrap = true;
-                
-                (area as any).worldPos = new THREE.Vector3(
-                    (i - grid/2) * spacing, 
-                    (j - grid/2) * spacing, 
-                    (Math.random() - 0.5) * 10
-                );
-                
-                // Pre-compute layout once for static text positions
+                (area as any).worldPos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 10);
                 (area as any).cachedLayout = area.computeLayout();
                 stressAreas.push(area);
             }
@@ -166,8 +200,14 @@ const setupUI = () => {
     document.getElementById('btn-2d')?.addEventListener('click', () => set3D(false));
     document.getElementById('btn-3d')?.addEventListener('click', () => set3D(true));
     document.getElementById('ex-showcase')?.addEventListener('click', () => setExhibit('showcase'));
+    document.getElementById('ex-professional')?.addEventListener('click', () => setExhibit('professional'));
     document.getElementById('ex-notebox')?.addEventListener('click', () => setExhibit('notebox'));
     document.getElementById('ex-stress')?.addEventListener('click', () => setExhibit('stress'));
+
+    // BG Themes
+    document.getElementById('bg-dark')?.addEventListener('click', () => setBG(0x0a0a0a, 'bg-dark'));
+    document.getElementById('bg-steel')?.addEventListener('click', () => setBG(0x1e293b, 'bg-steel'));
+    document.getElementById('bg-light')?.addEventListener('click', () => setBG(0xf1f5f9, 'bg-light'));
 };
 
 textManager.load('/font.json', '/font.png').then(() => {
@@ -189,21 +229,29 @@ textManager.load('/font.json', '/font.png').then(() => {
             const hacker = noteBoxes[2];
             
             textEffects.update(deltaTime);
-            // Hero Rainbow
             textEffects.updateRainbow(hero.titleArea, 0, hero.titleArea.text.length, 1.0);
             
-            // Secondary and Hacker titles: Solid black for contrast on blue header
-            textEffects.applyColor(secondary.titleArea, 0, secondary.titleArea.text.length, new THREE.Color(0x000000));
-            textEffects.applyColor(hacker.titleArea, 0, hacker.titleArea.text.length, new THREE.Color(0x000000));
+            // Light background check: If BG is light, use dark titles. If dark, use white/colored.
+            const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
+            const titleColor = isLightBg ? new THREE.Color(0x000000) : new THREE.Color(1, 1, 1);
+            
+            textEffects.applyColor(secondary.titleArea, 0, secondary.titleArea.text.length, titleColor);
+            textEffects.applyColor(hacker.titleArea, 0, hacker.titleArea.text.length, titleColor);
 
             hacker.bodyArea.text = originalHackerText;
             textEffects.applyScramble(hacker.bodyArea, 0, hacker.bodyArea.text.length, 0.1);
             textEffects.applyColor(hacker.bodyArea, 0, hacker.bodyArea.text.length, new THREE.Color(0x00d4ff));
 
-            secondary.setSize(9 + Math.sin(elapsedTime) * 1, 6, 1.2);
+            secondary.setSize(9 + Math.sin(elapsedTime) * 1, 6.5, 1.2);
             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'professional') {
+             const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
+             for (const nb of noteBoxes) {
+                 const color = isLightBg ? new THREE.Color(0,0,0) : new THREE.Color(1,1,1);
+                 textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, color);
+             }
+             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
         } else if (currentExhibit === 'notebox') {
-            // Apply black titles to all boxes in the notebox exhibit too
             for (const nb of noteBoxes) {
                 textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, new THREE.Color(0x000000));
             }
@@ -213,26 +261,16 @@ textManager.load('/font.json', '/font.png').then(() => {
             for (const area of stressAreas) {
                 const pos = (area as any).worldPos;
                 const cachedLayout = (area as any).cachedLayout;
-                
-                // Dynamic effects
                 textEffects.updateRainbow(area, 0, area.text.length, 0.4);
-                
-                // Re-apply colors to cached layout (efficient)
                 for (let k = 0; k < cachedLayout.length; k++) {
                     const glyph = cachedLayout[k];
-                    // Find the color from area.styles
                     const style = area.styles.find(s => k >= s.start && k < s.end);
                     if (style && style.color) glyph.color = style.color;
-                    
-                    const worldX = glyph.x + pos.x / textManager.textScale;
-                    const worldY = glyph.y + pos.y / textManager.textScale;
-                    const worldZ = pos.z;
-                    
                     allLayouts.push({
                         char: glyph.char,
-                        x: worldX,
-                        y: worldY,
-                        z: worldZ,
+                        x: glyph.x + pos.x / textManager.textScale,
+                        y: glyph.y + pos.y / textManager.textScale,
+                        z: pos.z,
                         color: glyph.color
                     });
                 }
