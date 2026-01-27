@@ -96,6 +96,22 @@ export class ExhibitManager {
                  bodyColor1: 0x18181b, bodyAlpha: 1.0
             });
             this.noteBoxMap.set(palette.name, palette);
+
+            // --- Fluent API Examples ---
+            this.textManager.createTextArea("ROTATED TEXT")
+                .setPos(-5, 15, 0)
+                .setRot(Math.PI / 6) // 30 degrees
+                .setColor(0xffaa00);
+
+            this.textManager.createTextArea("SCALED & COLORED")
+                .setPos(5, 15, 0)
+                .setScale(1.5)
+                .setColor(0x00d4ff);
+
+            this.textManager.createTextArea("Fluent API makes\npositioning easy!")
+                .setPos(0, -5, 0)
+                .setColor(0xaaaaaa)
+                .setRot(-0.1);
         } else if (id === 'showcase') {
             const hero = new NoteBox(this.textManager, this.boxManager, "hero");
             hero.setPosition(-7, 10, 0);
