@@ -120,8 +120,8 @@ export class NoteBox extends THREE.Object3D {
             new THREE.Color(0x888888), new THREE.Color(0xffffff), 1.0, GradientMode.RADIAL);
 
         // Position the TextAreas locally
-        this.titleArea.position.set(0.25 * this.textManager.textScale, 0, 0);
-        this.bodyArea.position.set(0.25 * this.textManager.textScale, -this.headerHeight - 0.2, 0);
+        this.titleArea.position.set(0.25, 0, 0);
+        this.bodyArea.position.set(0.25, -this.headerHeight - 0.2, 0);
     }
 
     setStyle(config: {
