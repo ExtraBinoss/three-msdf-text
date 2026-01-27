@@ -19,9 +19,11 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 camera.position.set(0, 0, 15)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-renderer.setSize(window.innerWidth, window.innerHeight)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 document.body.appendChild(renderer.domElement)
+
+// Set ratio and size AFTER appending to ensure proper DOM context
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setSize(window.innerWidth, window.innerHeight)
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
@@ -377,7 +379,12 @@ textManager.load('/font.json', '/font.png').then(() => {
 });
 
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Use floor to ensure we don't end up with sub-pixel viewport issues
+    renderer.setSize(Math.floor(width), Math.floor(height));
 });

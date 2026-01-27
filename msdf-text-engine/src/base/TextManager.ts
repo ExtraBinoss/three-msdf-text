@@ -9,7 +9,6 @@ import msdfFrag from '../shaders/msdf.frag?raw';
  */
 export class TextManager {
     private mesh: THREE.InstancedMesh;
-    private geometry: THREE.PlaneGeometry;
     private material: THREE.ShaderMaterial;
     private charMap: Map<string, Char> = new Map();
     private capacity: number;
@@ -30,9 +29,6 @@ export class TextManager {
         this.scene = scene;
         this.capacity = initialCapacity;
 
-        // 1. Geometry
-        this.geometry = new THREE.PlaneGeometry(1, 1);
-
         // 3. Material
         this.material = new THREE.ShaderMaterial({
             vertexShader: msdfVert,
@@ -47,16 +43,11 @@ export class TextManager {
 
         // Initialize mesh with initial capacity
         this.mesh = this.createMesh(this.capacity);
-        this.geometry = this.mesh.geometry as THREE.PlaneGeometry;
         scene.add(this.mesh);
     }
 
-    /**
-     * Creates a new InstancedMesh with the specified capacity.
-     * Used for initial creation and dynamic growth.
-     */
     private createMesh(capacity: number): THREE.InstancedMesh {
-        const geometry = this.geometry.clone();
+        const geometry = new THREE.PlaneGeometry(1, 1);
         
         // Custom Attributes
         const uvOffsetAttribute = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
@@ -68,6 +59,7 @@ export class TextManager {
         const mesh = new THREE.InstancedMesh(geometry, this.material, capacity);
         mesh.count = 0;
         mesh.frustumCulled = false;
+        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         
         return mesh;
     }
@@ -138,7 +130,6 @@ export class TextManager {
         
         // Update references
         this.mesh = newMesh;
-        this.geometry = newMesh.geometry as THREE.PlaneGeometry;
         this.capacity = newCapacity;
         this._profileData.growthCount++;
         
