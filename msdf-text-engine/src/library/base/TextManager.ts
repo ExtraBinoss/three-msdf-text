@@ -70,7 +70,9 @@ export class TextManager {
 
     /**
      * Grows the buffer capacity by recreating the InstancedMesh.
-     * Preserves existing instance data.
+     * Preserves existing instance data (Matrices, UVs, Colors) by copying to the new buffer.
+     * 
+     * @param requiredCapacity The absolute minimum capacity required.
      */
     private grow(requiredCapacity: number) {
         // Headroom strategy: 
@@ -252,7 +254,10 @@ export class TextManager {
 
     /**
      * Renders a custom list of glyphs at specific offsets.
-     * Useful for complex UI components like NoteBoxes.
+     * Useful for complex UI components like NoteBoxes where glyphs might be computed in local space
+     * but need to be rendered in world space.
+     * 
+     * @param glyphs Array of glyph objects with world coordinates {x, y, z, char, scale, ...}.
      */
     /**
      * Renders a custom list of glyphs.
@@ -317,7 +322,7 @@ export class TextManager {
 
     /**
      * Resets the engine to a clean state and recovers VRAM.
-     * Re-allocates a small buffer if the current one is excessively large.
+     * Removes all instances and reverts to a minimal buffer size if the headeroom is too large.
      */
     clear() {
         const initialCapacity = 100;
@@ -368,6 +373,9 @@ export class TextManager {
 
     /**
      * Returns profiling and status information about the text engine.
+     * Useful for debugging performance and buffer usage.
+     * 
+     * @returns Object containing metrics like visible characters, buffer size, and update times.
      */
     getProfile() {
         return {

@@ -63,7 +63,11 @@ export class NoteBox extends THREE.Object3D {
         this.textManager.add(this);
     }
 
-    // Helper to identify which part was hit
+    /**
+     * Helper to identify which part of the NoteBox was hit by a raycast or interaction.
+     * @param instanceId The instance ID returned by the physics or interaction hit test.
+     * @returns {'header' | 'body' | 'resize' | null} The part name or null if no match.
+     */
     getPart(instanceId: number): 'header' | 'body' | 'resize' | null {
         if (instanceId === this.headerId) return 'header';
         if (instanceId === this.bodyId) return 'body';
@@ -71,6 +75,10 @@ export class NoteBox extends THREE.Object3D {
         return null;
     }
 
+    /**
+     * Disposes of the visual resources associated with this NoteBox.
+     * Removes boxes from the BoxManager.
+     */
     dispose() {
         this.boxManager.removeBox(this.headerId);
         this.boxManager.removeBox(this.bodyId);
@@ -242,8 +250,10 @@ export class NoteBox extends THREE.Object3D {
 
     /**
      * Computes the layout for glyphs to be rendered.
+     * Automatically adjusts box dimensions if autoWidth or autoHeight is enabled.
+     * 
      * @param textScale The global scale of the text.
-     * @returns Array of glyph layout data.
+     * @returns {any[]} Array of glyph layout data containing position, rotation, and color.
      */
     getLayout(textScale: number) {
         // --- Auto Width Check (Title driven) ---
@@ -316,8 +326,11 @@ export class NoteBox extends THREE.Object3D {
 
     /**
      * Gets the world position of the caret for the specified area type.
+     * Useful for positioning a visual blinking cursor.
+     * 
      * @param type 'header' or 'body'
      * @param textScale current text scale
+     * @returns {THREE.Vector3} The world position of the caret.
      */
     getCaretWorldPosition(type: 'header' | 'body', textScale: number) {
         const area = type === 'header' ? this.titleArea : this.bodyArea;
@@ -337,6 +350,12 @@ export class NoteBox extends THREE.Object3D {
 
     /**
      * Converts a world position to a local text coordinate (for picking).
+     * Accounts for text scale and vertical offsets of headers.
+     * 
+     * @param type 'header' or 'body'
+     * @param worldPoint The point in world space.
+     * @param textScale The current text scale.
+     * @returns {{x: number, y: number}} Local 2D coordinates for text layout.
      */
     getLocalPoint(type: 'header' | 'body', worldPoint: THREE.Vector3, textScale: number) {
         const area = type === 'header' ? this.titleArea : this.bodyArea;

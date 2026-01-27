@@ -39,7 +39,9 @@ export class TextArea extends THREE.Object3D {
     public defaultColor: THREE.Color = new THREE.Color(1, 1, 1);
     
     // Caret state
+    /** Current index of the caret in the text string */
     public caretIndex: number = 0;
+    /** Last known local position of the caret {x, y} */
     public lastCaretPos: { x: number, y: number } = { x: 0, y: 0 };
     
     public fontData: FontData;
@@ -56,7 +58,10 @@ export class TextArea extends THREE.Object3D {
 
     /**
      * Calculates the layout of the current text within the defined bounds.
-     * @returns Array of glyphs and their relative coordinates in font units.
+     * Handles word wrapping, newlines, and style applications.
+     * Populates the visualMap for interaction.
+     * 
+     * @returns {GlyphLayout[]} Array of glyphs and their relative coordinates in font units.
      */
     computeLayout(): GlyphLayout[] {
         const glyphs: GlyphLayout[] = [];
@@ -168,6 +173,12 @@ export class TextArea extends THREE.Object3D {
         return char === ' ' || char === '\t';
     }
 
+    /**
+     * Calculates the width of the next token (word or whitespace block).
+     * Used for look-ahead word wrapping.
+     * @param text The complete string.
+     * @param startIndex The index to start measuring from.
+     */
     private getTokenWidth(text: string, startIndex: number): number {
         let width = 0;
         const startIsWhitespace = this.isWhitespace(text[startIndex]);
@@ -208,6 +219,10 @@ export class TextArea extends THREE.Object3D {
     /**
      * Finds the character index closest to a given local XY coordinate.
      * Uses the cached visualMap from the last computeLayout run.
+     * 
+     * @param x Local X coordinate (font units).
+     * @param y Local Y coordinate (font units).
+     * @returns {number} The index of the character at or closest to the position.
      */
     getIndexAtPos(x: number, y: number): number {
         if (this.visualMap.length === 0) return 0;
@@ -248,7 +263,10 @@ export class TextArea extends THREE.Object3D {
 
     /**
      * returns the layout transformed by the Object3D world matrix.
+     * Useful for managers that need to batch requests in world space.
+     * 
      * @param textScale The global text scale used by the engine.
+     * @returns {any[]} Array of glyph objects with world coordinates.
      */
     getWorldLayout(textScale: number): any[] {
         const localGlyphs = this.computeLayout();

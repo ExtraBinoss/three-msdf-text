@@ -57,10 +57,11 @@ npm run dev
 ### Basic Usage
 
 ```typescript
-import { TextManager } from 'msdf-text-engine';
+import { TextManager, NoteBox, BoxManager } from 'msdf-text-engine';
 
 // 1. Initialize the Rendering Core
 const textManager = new TextManager(scene);
+const boxManager = new BoxManager(scene); // Required for NoteBox backgrounds
 
 // 2. Load Font Assets
 await textManager.load('./inter-msdf.json', './inter-msdf.png');
@@ -73,7 +74,19 @@ textManager.createTextArea("HELLO WORLD")
     .setBoxSize(10, 5)     // Word-wrapping bounds
     .setWordWrap(true);    // Enable wrapping
 
-// 4. Update Loop
+// 4. Create NoteBoxes (Advanced UI Components)
+const noteBox = new NoteBox(textManager, boxManager, "ui-box-1")
+    .setPos(0, 0, 0)
+    .setBoxSize(8, 6)
+    .setTitle("FLUENT API")
+    .setBody("NoteBoxes support headers, bodies, gradients, and auto-wrapping text.")
+    .setStyle({
+        headerColor1: 0x0088ff,
+        bodyColor1: 0x111111,
+        bodyAlpha: 0.95
+    });
+    
+// 5. Update Loop
 function animate() {
     // Automatically computes layouts and batches all text into one draw call
     textManager.update();
