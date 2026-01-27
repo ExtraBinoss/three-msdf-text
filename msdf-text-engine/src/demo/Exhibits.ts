@@ -53,7 +53,7 @@ export class ExhibitManager {
         this.clearScene(interaction);
         
         if (id === 'professional') {
-            const corp1 = new NoteBox(this.textManager, this.boxManager, "corp1")
+            const corp1 = this.textManager.createNoteBox(this.boxManager, "corp1")
                 .setPos(-12, 10, 0)
                 .setBoxSize(10, 5)
                 .setTitle("BOX 01")
@@ -64,7 +64,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(corp1.name, corp1);
 
-            const placeholderBox = new NoteBox(this.textManager, this.boxManager, "placeholder-demo")
+            const placeholderBox = this.textManager.createNoteBox(this.boxManager, "placeholder-demo")
                 .setPos(-12, -5, 0)
                 .setBoxSize(10, 4)
                 .setTitle("") // Empty
@@ -79,7 +79,7 @@ export class ExhibitManager {
             
             this.noteBoxMap.set(placeholderBox.name, placeholderBox);
 
-            const simple = new NoteBox(this.textManager, this.boxManager, "simple")
+            const simple = this.textManager.createNoteBox(this.boxManager, "simple")
                 .setPos(0, 5, 0)
                 .setBoxSize(10, 5)
                 .setTitle("SIMPLE LAYOUT")
@@ -91,7 +91,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(simple.name, simple);
 
-            const palette = new NoteBox(this.textManager, this.boxManager, "palette")
+            const palette = this.textManager.createNoteBox(this.boxManager, "palette")
                 .setPos(12, 5, 0)
                 .setBoxSize(10, 5)
                 .setTitle("COLOR SAMPLES")
@@ -122,7 +122,7 @@ export class ExhibitManager {
                 .setColor(0xaaaaaa)
                 .setRot(-0.1);
         } else if (id === 'showcase') {
-            const hero = new NoteBox(this.textManager, this.boxManager, "hero")
+            const hero = this.textManager.createNoteBox(this.boxManager, "hero")
                 .setPos(-7, 10, 0)
                 .setBoxSize(14, 2.5)
                 .setTitle("TYPE FREELY")
@@ -133,7 +133,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(hero.name, hero);
 
-            const secondary = new NoteBox(this.textManager, this.boxManager, "secondary")
+            const secondary = this.textManager.createNoteBox(this.boxManager, "secondary")
                 .setPos(-10, 2, 0)
                 .setBoxSize(9, 6.5)
                 .setTitle("STABLE GRADIENTS")
@@ -145,7 +145,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(secondary.name, secondary);
 
-            const hacker = new NoteBox(this.textManager, this.boxManager, "hacker")
+            const hacker = this.textManager.createNoteBox(this.boxManager, "hacker")
                 .setPos(1, 2, 0)
                 .setBoxSize(9, 6.5)
                 .setTitle("TERMINAL GLITCH")
@@ -156,7 +156,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(hacker.name, hacker);
 
-            const kinetic = new NoteBox(this.textManager, this.boxManager, "kinetic")
+            const kinetic = this.textManager.createNoteBox(this.boxManager, "kinetic")
                 .setPos(12, 5, 0)
                 .setBoxSize(9, 3.5)
                 .setTitle("KINETIC TYPOGRAPHY")
@@ -167,7 +167,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(kinetic.name, kinetic);
 
-            const glitch = new NoteBox(this.textManager, this.boxManager, "glitch")
+            const glitch = this.textManager.createNoteBox(this.boxManager, "glitch")
                 .setPos(12, 12, 0)
                 .setBoxSize(9, 3.5)
                 .setTitle("GLITCH SYSTEM")
@@ -178,7 +178,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(glitch.name, glitch);
 
-            const pulse = new NoteBox(this.textManager, this.boxManager, "pulse")
+            const pulse = this.textManager.createNoteBox(this.boxManager, "pulse")
                 .setPos(1, 18, 0)
                 .setBoxSize(9, 3.5)
                 .setTitle("BREATHING TEXT")
@@ -189,7 +189,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(pulse.name, pulse);
 
-            const wave = new NoteBox(this.textManager, this.boxManager, "wave")
+            const wave = this.textManager.createNoteBox(this.boxManager, "wave")
                 .setPos(-10, 18, 0)
                 .setBoxSize(9, 3.5)
                 .setTitle("WAVE FORM")
@@ -200,7 +200,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(wave.name, wave);
 
-            const shake = new NoteBox(this.textManager, this.boxManager, "shake")
+            const shake = this.textManager.createNoteBox(this.boxManager, "shake")
                 .setPos(-12, 27, 0)
                 .setBoxSize(9, 3.5)
                 .setTitle("VIBRATING WARNING")
@@ -211,7 +211,7 @@ export class ExhibitManager {
                 });
             this.noteBoxMap.set(shake.name, shake);
 
-            const typewriter = new NoteBox(this.textManager, this.boxManager, "typewriter")
+            const typewriter = this.textManager.createNoteBox(this.boxManager, "typewriter")
                 .setPos(1, 27, 0)
                 .setBoxSize(9, 3.5)
                 .setTitle("TYPEWRITER REVEAL")
@@ -224,7 +224,7 @@ export class ExhibitManager {
 
         } else if (id === 'notebox') {
             for (let i = 0; i < 3; i++) {
-                const nb = new NoteBox(this.textManager, this.boxManager, `box-${i+1}`)
+                const nb = this.textManager.createNoteBox(this.boxManager, `box-${i+1}`)
                     .setPos(-12 + i * 9, 2 - i * 2, i * -1)
                     .setBoxSize(8, 6)
                     .setTitle(`BOX ${i+1}`)

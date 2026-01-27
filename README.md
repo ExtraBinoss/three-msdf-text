@@ -75,7 +75,7 @@ textManager.createTextArea("HELLO WORLD")
     .setWordWrap(true);    // Enable wrapping
 
 // 4. Create NoteBoxes (Advanced UI Components)
-const noteBox = new NoteBox(textManager, boxManager, "ui-box-1")
+const noteBox = textManager.createNoteBox(boxManager, "ui-box-1")
     .setPos(0, 0, 0)
     .setBoxSize(8, 6)
     .setTitle("FLUENT API")
