@@ -166,4 +166,8 @@ export class BoxManager {
         this.instances = [];
         this.mesh.count = 0;
     }
+
+    public getMesh() {
+        return this.mesh;
+    }
 }

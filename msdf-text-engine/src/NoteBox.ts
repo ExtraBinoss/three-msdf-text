@@ -26,9 +26,10 @@ export class NoteBox {
     private boxManager: BoxManager;
     private headerId: number;
     private bodyId: number;
+    private resizeHandleId: number;
     
-    private width: number = 8;
-    private height: number = 6;
+    public width: number = 8;
+    public height: number = 6;
     private headerHeight: number = 1.2;
 
     constructor(textManager: TextManager, boxManager: BoxManager) {
@@ -41,8 +42,19 @@ export class NoteBox {
         // Initialize with default values
         this.headerId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
         this.bodyId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(1,1,1), this.bodyColor1, this.bodyColor2, this.bodyAlpha, this.bodyGradientMode);
+        
+        // Resize handle (small square at bottom right)
+        this.resizeHandleId = this.boxManager.addBox(new THREE.Vector3(), new THREE.Vector3(0.5, 0.5, 1), new THREE.Color(0xffffff), new THREE.Color(0x888888), 1.0, GradientMode.RADIAL);
 
         this.updateGeometry();
+    }
+
+    // Helper to identify which part was hit
+    getPart(instanceId: number): 'header' | 'body' | 'resize' | null {
+        if (instanceId === this.headerId) return 'header';
+        if (instanceId === this.bodyId) return 'body';
+        if (instanceId === this.resizeHandleId) return 'resize';
+        return null;
     }
 
     setSize(w: number, h: number, headerH: number = 1.2) {
@@ -65,6 +77,11 @@ export class NoteBox {
         
         this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), 
             this.bodyColor1, this.bodyColor2, this.bodyAlpha, this.bodyGradientMode);
+
+        // Resize Handle (Bottom Right)
+        const handlePos = this.position.clone().add(new THREE.Vector3(this.width - 0.2, -this.height + 0.2, 0.02));
+        this.boxManager.updateBox(this.resizeHandleId, handlePos, new THREE.Vector3(0.4, 0.4, 1), 
+            new THREE.Color(0x888888), new THREE.Color(0xffffff), 1.0, GradientMode.RADIAL);
     }
 
     setPosition(x: number, y: number, z: number) {

@@ -8,7 +8,7 @@ import { BoxManager, GradientMode } from './BoxManager.ts'
 import { TextArea } from './TextArea.ts'
 
 /**
- * MSDF TEXT ENGINE - MINIMALIST TURBO PLAYGROUND
+ * MSDF TEXT ENGINE - INTERACTIVE PLAYGROUND
  */
 
 const scene = new THREE.Scene()
@@ -26,7 +26,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.enableRotate = false;
 controls.mouseButtons = {
-    LEFT: null,
+    LEFT: null, 
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.PAN
 }
@@ -42,6 +42,12 @@ const clock = new THREE.Clock();
 const noteBoxes: NoteBox[] = [];
 const stressAreas: TextArea[] = [];
 
+// Selection & Interaction State
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let resizingBox: NoteBox | null = null;
+let lastMouseWorld = new THREE.Vector3();
+
 const animals = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Leopard", "Cheetah", "Rhino", "Hippo", "Gorilla", "Panda", "Wolf", "Bear", "Eagle", "Hawk", "Penguin", "Dolphin", "Whale", "Shark", "Octopus", "Butterfly", "Stallion", "Falcon", "Panther", "Jaguar", "Lynx", "Cobra", "Viper", "Dragon"];
 
 const set3D = (enabled: boolean) => {
@@ -51,10 +57,8 @@ const set3D = (enabled: boolean) => {
         MIDDLE: THREE.MOUSE.DOLLY,
         RIGHT: THREE.MOUSE.PAN
     };
-    
     document.getElementById('btn-2d')?.classList.toggle('active', !enabled);
     document.getElementById('btn-3d')?.classList.toggle('active', enabled);
-    
     if (!enabled) {
         camera.position.set(0, 0, 15);
         controls.target.set(0, 0, 0);
@@ -86,14 +90,13 @@ const initExhibit = (id: string) => {
     clearScene();
     
     if (id === 'showcase') {
-        // Hero: Minimalist Gray / Slate Theme
         const hero = new NoteBox(textManager, boxManager);
         hero.setPosition(-7, 5, 0);
         hero.setSize(14, 2.5, 1.0);
-        hero.titleArea.text = "MINIMALIST VIEW";
-        hero.bodyArea.text = "Demonstrating the classic slate and gray corporate look.";
+        hero.titleArea.text = "EDIT ME (DBL CLICK)";
+        hero.bodyArea.text = "Double click headers or bodies to edit text. Drag the bottom right handle to resize.";
         hero.setStyle({
-            headerColor1: 0x444444, headerColor2: 0x333333, headerAlpha: 1.0,
+            headerColor1: 0x444444, headerColor2: 0x333333,
             bodyColor1: 0x222222, bodyAlpha: 0.95
         });
         noteBoxes.push(hero);
@@ -102,7 +105,7 @@ const initExhibit = (id: string) => {
         secondary.setPosition(-10, 0, 0);
         secondary.setSize(9, 6.5, 1.2);
         secondary.titleArea.text = "STABLE GRADIENTS";
-        secondary.bodyArea.text = "The background boxes now support vertical gradients and per-instance alpha blending.";
+        secondary.bodyArea.text = "Try resizing this box. Notice how the internal layout re-wraps automatically and effects stay anchored.";
         secondary.setStyle({
             headerColor1: 0x2c3e50, headerColor2: 0x2c3e50,
             bodyColor1: 0x1a2a32, bodyColor2: 0x0a1012, bodyGradientMode: GradientMode.VERTICAL,
@@ -114,10 +117,7 @@ const initExhibit = (id: string) => {
         hacker.setPosition(1, 0, 0);
         hacker.setSize(9, 6.5, 1.2);
         hacker.titleArea.text = "TERMINAL GLITCH";
-        hacker.bodyArea.text = "Testing independent background alpha...\n\n" +
-                               "NODE: 0xDE77\n" +
-                               "SYNC: ACTIVE\n" +
-                               "ENCRYPTION: HIGH";
+        hacker.bodyArea.text = "Status: Interactive\nResize handle at bottom right.\n\nDouble click to re-simulate encryption protocols.";
         hacker.setStyle({
             headerColor1: 0x00ff00, headerColor2: 0x008800,
             bodyColor1: 0x000500, bodyColor2: 0x001000, bodyAlpha: 0.7
@@ -129,53 +129,18 @@ const initExhibit = (id: string) => {
         corp1.setPosition(-12, 5, 0);
         corp1.setSize(10, 6, 1.0);
         corp1.titleArea.text = "CORPORATE DASHBOARD";
-        corp1.bodyArea.text = "A clean, minimalist style using subtle horizontal gradients.\n\n" +
-                             "Header: Horizontal Blue\n" +
-                             "Body: Solid Off-Black (95% Opacity)\n\n" +
-                             "This looks professional and readable for enterprise tools.";
+        corp1.bodyArea.text = "Standard corporate style NoteBox.\n\nDouble click to change the data feed.";
         corp1.setStyle({
             headerColor1: 0x1e293b, headerColor2: 0x334155, headerGradientMode: GradientMode.HORIZONTAL,
             bodyColor1: 0x0f172a, bodyAlpha: 0.95
         });
         noteBoxes.push(corp1);
 
-        const radBox = new NoteBox(textManager, boxManager);
-        radBox.setPosition(0, 5, 0);
-        radBox.setSize(10, 6, 1.0);
-        radBox.titleArea.text = "RADIAL DESIGN";
-        radBox.bodyArea.text = "Showcasing the Radial Gradient mode.\n\n" +
-                               "The body uses a radial fade from center to edges.";
-        radBox.setStyle({
-            headerColor1: 0x0f172a, headerColor2: 0x0f172a,
-            bodyColor1: 0x1e293b, bodyColor2: 0x020617, bodyGradientMode: GradientMode.RADIAL,
-            bodyAlpha: 1.0
-        });
-        noteBoxes.push(radBox);
-
-        const palette = new NoteBox(textManager, boxManager);
-        palette.setPosition(-12, -2, 0);
-        palette.setSize(10, 5, 1.0);
-        palette.titleArea.text = "COLOR SAMPLES";
-        palette.bodyArea.text = "Base Colors Supported:\n" +
-                               "• Slate: #1e293b\n" +
-                               "• Zinc: #18181b\n" +
-                               "• Neutral: #171717\n" +
-                               "• Custom: Any Hex value";
-        palette.setStyle({
-             headerColor1: 0x00d4ff, headerColor2: 0x00d4ff,
-             bodyColor1: 0x18181b, bodyAlpha: 1.0
-        });
-        noteBoxes.push(palette);
-
-        // SIMPLE LAYOUT: No gradients, no flashy stuff
         const simple = new NoteBox(textManager, boxManager);
-        simple.setPosition(0, -2, 0);
-        simple.setSize(10, 5, 1.0);
+        simple.setPosition(2, 5, 0);
+        simple.setSize(10, 6, 1.0);
         simple.titleArea.text = "SIMPLE LAYOUT";
-        simple.bodyArea.text = "A clean, basic NoteBox without gradients or transparency.\n\n" +
-                              "Header: Solid Light Gray\n" +
-                              "Body: Solid Dark Gray\n" +
-                              "Text: Solid White";
+        simple.bodyArea.text = "A clean, basic NoteBox without gradients or transparency.\n\nHeader: Solid Light Gray\nBody: Solid Dark Gray";
         simple.setStyle({
             headerColor1: 0x666666, headerColor2: 0x666666, headerGradientMode: GradientMode.NONE,
             bodyColor1: 0x222222, bodyColor2: 0x222222, bodyGradientMode: GradientMode.NONE,
@@ -187,9 +152,8 @@ const initExhibit = (id: string) => {
             const nb = new NoteBox(textManager, boxManager);
             nb.setPosition(-12 + i * 9, 2 - i * 2, i * -1);
             nb.setSize(8, 6, 1.2);
-            nb.titleArea.text = `BOX MODULE 0${i+1}`;
-            nb.bodyArea.text = `Standard NoteBox component.\n\n` +
-                               `• Auto-clipping\n• Word wrap\n• Header alignment\n• Depth testing`;
+            nb.titleArea.text = `BOX ${i+1}`;
+            nb.bodyArea.text = `Interactive layout unit.\n\nResize me using the handle!`;
             noteBoxes.push(nb);
         }
     } else if (id === 'stress') {
@@ -212,8 +176,6 @@ const initExhibit = (id: string) => {
     }
 };
 
-const originalHackerText = "Decrypting secret data... \n\n0x7F4A2B9C1D\nSTATUS: UNKNOWN\nACCESS: DENIED";
-
 const setupUI = () => {
     document.getElementById('btn-2d')?.addEventListener('click', () => set3D(false));
     document.getElementById('btn-3d')?.addEventListener('click', () => set3D(true));
@@ -222,58 +184,97 @@ const setupUI = () => {
     document.getElementById('ex-notebox')?.addEventListener('click', () => setExhibit('notebox'));
     document.getElementById('ex-stress')?.addEventListener('click', () => setExhibit('stress'));
 
-    // BG Themes
     document.getElementById('bg-dark')?.addEventListener('click', () => setBG(0x0a0a0a, 'bg-dark'));
     document.getElementById('bg-steel')?.addEventListener('click', () => setBG(0x1e293b, 'bg-steel'));
     document.getElementById('bg-light')?.addEventListener('click', () => setBG(0xf1f5f9, 'bg-light'));
 };
 
+const handleInteraction = () => {
+    renderer.domElement.addEventListener('mousemove', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        if (resizingBox) {
+            raycaster.setFromCamera(mouse, camera);
+            const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -resizingBox.position.z);
+            const planeIntersect = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, planeIntersect);
+            
+            const newW = Math.max(2, planeIntersect.x - resizingBox.position.x);
+            const newH = Math.max(2, -(planeIntersect.y - resizingBox.position.y));
+            resizingBox.setSize(newW, newH);
+        }
+    });
+
+    renderer.domElement.addEventListener('mousedown', (e) => {
+        raycaster.setFromCamera(mouse, camera);
+        const mesh = boxManager.getMesh();
+        const intersects = raycaster.intersectObject(mesh);
+        
+        if (intersects.length > 0) {
+            const instanceId = intersects[0].instanceId!;
+            const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
+            if (box && box.getPart(instanceId) === 'resize') {
+                resizingBox = box;
+                controls.enabled = false;
+            }
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        resizingBox = null;
+        controls.enabled = true;
+    });
+
+    renderer.domElement.addEventListener('dblclick', (e) => {
+        raycaster.setFromCamera(mouse, camera);
+        const mesh = boxManager.getMesh();
+        const intersects = raycaster.intersectObject(mesh);
+        
+        if (intersects.length > 0) {
+            const instanceId = intersects[0].instanceId!;
+            const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
+            if (box) {
+                const part = box.getPart(instanceId);
+                if (part === 'header') {
+                    const newTitle = window.prompt("New Title:", box.titleArea.text);
+                    if (newTitle !== null) box.titleArea.text = newTitle;
+                } else if (part === 'body') {
+                    const newBody = window.prompt("New Body:", box.bodyArea.text);
+                    if (newBody !== null) box.bodyArea.text = newBody;
+                }
+            }
+        }
+    });
+};
+
 textManager.load('/font.json', '/font.png').then(() => {
     setupUI();
+    handleInteraction();
     setExhibit('showcase');
 
     function animate() {
         requestAnimationFrame(animate);
         const deltaTime = clock.getDelta();
         const elapsedTime = clock.getElapsedTime();
-
         controls.update();
 
         let allLayouts: any[] = [];
+        const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
+        const defaultTitleColor = isLightBg ? new THREE.Color(0,0,0) : new THREE.Color(1,1,1);
 
-        if (currentExhibit === 'showcase' && noteBoxes.length >= 3) {
-            const hero = noteBoxes[0];
-            const secondary = noteBoxes[1];
-            const hacker = noteBoxes[2];
-            
+        if (currentExhibit === 'showcase' && noteBoxes.length >= 2) {
             textEffects.update(deltaTime);
-            textEffects.updateRainbow(hero.titleArea, 0, hero.titleArea.text.length, 1.0);
-            
-            // Light background check: If BG is light, use dark titles. If dark, use white/colored.
-            const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
-            const titleColor = isLightBg ? new THREE.Color(0x000000) : new THREE.Color(1, 1, 1);
-            
-            textEffects.applyColor(secondary.titleArea, 0, secondary.titleArea.text.length, titleColor);
-            textEffects.applyColor(hacker.titleArea, 0, hacker.titleArea.text.length, titleColor);
-
-            hacker.bodyArea.text = originalHackerText;
-            textEffects.applyScramble(hacker.bodyArea, 0, hacker.bodyArea.text.length, 0.1);
-            textEffects.applyColor(hacker.bodyArea, 0, hacker.bodyArea.text.length, new THREE.Color(0x00d4ff));
-
-            secondary.setSize(9 + Math.sin(elapsedTime) * 1, 6.5, 1.2);
+            noteBoxes.forEach((nb, i) => {
+                if (i === 0) textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
+                else textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor);
+            });
             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
         } else if (currentExhibit === 'professional') {
-             const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
-             for (const nb of noteBoxes) {
-                 const color = isLightBg ? new THREE.Color(0,0,0) : new THREE.Color(1,1,1);
-                 textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, color);
-             }
+             noteBoxes.forEach(nb => textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, defaultTitleColor));
              allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
-        } else if (currentExhibit === 'notebox') {
-            for (const nb of noteBoxes) {
-                textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, new THREE.Color(0x000000));
-            }
-            allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
+        } else if (currentExhibit === 'notebox' || currentExhibit === 'showcase') {
+             allLayouts = noteBoxes.flatMap(nb => nb.getLayout(textManager.textScale));
         } else if (currentExhibit === 'stress') {
             textEffects.update(deltaTime);
             for (const area of stressAreas) {
@@ -284,13 +285,7 @@ textManager.load('/font.json', '/font.png').then(() => {
                     const glyph = cachedLayout[k];
                     const style = area.styles.find(s => k >= s.start && k < s.end);
                     if (style && style.color) glyph.color = style.color;
-                    allLayouts.push({
-                        char: glyph.char,
-                        x: glyph.x + pos.x / textManager.textScale,
-                        y: glyph.y + pos.y / textManager.textScale,
-                        z: pos.z,
-                        color: glyph.color
-                    });
+                    allLayouts.push({ char: glyph.char, x: glyph.x + pos.x / textManager.textScale, y: glyph.y + pos.y / textManager.textScale, z: pos.z, color: glyph.color });
                 }
             }
         }
@@ -301,12 +296,7 @@ textManager.load('/font.json', '/font.png').then(() => {
         const profile = textManager.getProfile();
         const statsEl = document.getElementById('stats');
         if (statsEl) {
-            statsEl.innerText = 
-                `FPS: ${Math.round(1/deltaTime)}\n` +
-                `INSTANCES: ${profile.visibleCharacters}\n` +
-                `BUFFER: ${profile.bufferCapacity}\n` +
-                `CPU: ${profile.lastUpdateDuration.toFixed(2)}ms\n` +
-                `GL CALLS: ${renderer.info.render.calls}`;
+            statsEl.innerText = `FPS: ${Math.round(1/deltaTime)}\nINSTANCES: ${profile.visibleCharacters}\nBUFFER: ${profile.bufferCapacity}\nCPU: ${profile.lastUpdateDuration.toFixed(2)}ms`;
         }
     }
     animate();
