@@ -13,15 +13,15 @@ export class NoteBox {
     public position: THREE.Vector3 = new THREE.Vector3();
     
     // Style Properties
-    public headerColor1: THREE.Color = new THREE.Color(0x00d4ff);
-    public headerColor2: THREE.Color = new THREE.Color(0x00d4ff);
+    public headerColor1: THREE.Color = new THREE.Color(0x666666);
+    public headerColor2: THREE.Color = new THREE.Color(0x666666);
     public headerAlpha: number = 1.0;
-    public headerGradientMode: GradientMode = GradientMode.VERTICAL;
+    public headerGradientMode: GradientMode = GradientMode.NONE;
 
-    public bodyColor1: THREE.Color = new THREE.Color(0x0a1012);
-    public bodyColor2: THREE.Color = new THREE.Color(0x0a1012);
-    public bodyAlpha: number = 0.9;
-    public bodyGradientMode: GradientMode = GradientMode.VERTICAL;
+    public bodyColor1: THREE.Color = new THREE.Color(0x222222);
+    public bodyColor2: THREE.Color = new THREE.Color(0x222222);
+    public bodyAlpha: number = 1.0;
+    public bodyGradientMode: GradientMode = GradientMode.NONE;
 
     public id: string;
     private boxManager: BoxManager;
@@ -29,12 +29,12 @@ export class NoteBox {
     private bodyId: number;
     private resizeHandleId: number;
     
-    public width: number = 8;
-    public height: number = 6;
+    public width: number = 10;
+    public height: number = 5;
     public autoHeight: boolean = true;
     public autoWidth: boolean = true;
     public minWidth: number = 4;
-    private headerHeight: number = 1.2;
+    private headerHeight: number = 1.0;
 
     constructor(textManager: TextManager, boxManager: BoxManager, id?: string) {
         if (!textManager.fontData) throw new Error("Font data must be loaded first");
@@ -108,7 +108,9 @@ export class NoteBox {
         bodyColor1?: number | THREE.Color,
         bodyColor2?: number | THREE.Color,
         bodyAlpha?: number,
-        bodyGradientMode?: GradientMode
+        bodyGradientMode?: GradientMode,
+        titleColor?: number | THREE.Color,
+        textColor?: number | THREE.Color
     }) {
         if (config.headerColor1 !== undefined) {
             this.headerColor1 = this.toColor(config.headerColor1);
@@ -143,6 +145,13 @@ export class NoteBox {
         }
         if (config.bodyAlpha !== undefined) this.bodyAlpha = config.bodyAlpha;
         if (config.bodyGradientMode !== undefined) this.bodyGradientMode = config.bodyGradientMode;
+
+        if (config.titleColor !== undefined) {
+            this.titleArea.defaultColor = this.toColor(config.titleColor);
+        }
+        if (config.textColor !== undefined) {
+            this.bodyArea.defaultColor = this.toColor(config.textColor);
+        }
 
         this.updateGeometry();
     }

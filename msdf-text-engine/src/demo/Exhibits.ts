@@ -177,7 +177,7 @@ export class ExhibitManager {
             this.noteBoxMap.set(wave.id, wave);
 
             const shake = new NoteBox(this.textManager, this.boxManager, "shake");
-            shake.setPosition(-10, 27, 0);
+            shake.setPosition(-12, 27, 0);
             shake.setSize(9, 3.5, 1.2);
             shake.titleArea.text = "VIBRATING WARNING";
             shake.bodyArea.text = "DANGER: HIGH CORE HEAT\nSHAKE EFFECT ACTIVE";

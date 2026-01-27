@@ -135,7 +135,7 @@ textManager.load('font.json', 'font.png').then(() => {
                             textEffects.updateTypewriter(nb.bodyArea, 0, nb.bodyArea.text.length, progress);
                         }
                     } else {
-                        const titleColor = exhibitManager.currentExhibit === 'notebox' ? new THREE.Color(0,0,0) : defaultTitleColor;
+                        const titleColor = defaultTitleColor;
                         textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, titleColor);
                     }
                     

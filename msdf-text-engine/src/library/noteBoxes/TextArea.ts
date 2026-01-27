@@ -35,6 +35,7 @@ export class TextArea {
     public styles: TextStyle[] = [];
     public placeholder: string = "";
     public placeholderColor: THREE.Color = new THREE.Color(1, 1, 1).multiplyScalar(0.4);
+    public defaultColor: THREE.Color = new THREE.Color(1, 1, 1);
     
     // Caret state
     public caretIndex: number = 0;
@@ -60,110 +61,123 @@ export class TextArea {
         this.visualMap = [];
         
         const isPlaceholder = this.text.length === 0 && this.placeholder.length > 0;
-        const activeText = isPlaceholder ? this.placeholder : this.text;
+        const text = isPlaceholder ? this.placeholder : this.text;
         
-        const lines = activeText.split('\n');
-        
-        let cursorY = 0;
         const baseLineHeight = this.fontData.common.lineHeight * this.lineSpacing;
+        const defaultColor = this.defaultColor;
         
-        let stringPointer = 0;
+        let cursorX = 0;
+        let cursorY = 0;
         
-        // Initial caret pos
-        this.lastCaretPos = { x: 0, y: 0 };
+        // Helper to update caret position
+        const updateCaret = (index: number, x: number, y: number) => {
+            if (index === this.caretIndex) {
+                this.lastCaretPos = { x, y };
+            }
+        };
 
-        for (let l = 0; l < lines.length; l++) {
-            const line = lines[l];
-            const words = this.wordWrap ? line.split(/(\s+)/) : [line];
-            let cursorX = 0;
+        // Pre-process styles if they exist to avoid heavy checks in the loop
+        const hasStyles = !isPlaceholder && this.styles.length > 0;
 
-            for (const word of words) {
-                let wordWidth = 0;
-                for (const charStr of word) {
-                    const charData = this.charMap.get(charStr);
-                    if (charData) wordWidth += charData.xadvance;
-                }
+        for (let i = 0; i <= text.length; i++) {
+            // Newline and Wrap points: tokens are either whitespace blocks or words
+            // We only check for wrapping at the start of a token or if a single char is too long
+            const char = text[i];
+            const isAtEnd = i === text.length;
 
-                // Word wrap check
-                if (this.wordWrap && cursorX + wordWidth > this.width && cursorX > 0) {
-                    cursorX = 0;
-                    cursorY -= baseLineHeight;
-                }
-                // Add characters to layout
-                for (let i = 0; i < word.length; i++) {
-                    const charStr = word[i];
-                    const charData = this.charMap.get(charStr);
-                    
-                    // Character-level wrap (for long words or non-spaced strings)
-                    if (this.wordWrap && charData && cursorX + charData.xadvance > this.width && cursorX > 0) {
+            // Handle word wrap at the start of new tokens
+            if (!isAtEnd && this.wordWrap && cursorX > 0 && char !== '\n') {
+                const isStartOfToken = i === 0 || this.isWhitespace(text[i-1]) !== this.isWhitespace(char);
+                if (isStartOfToken) {
+                    const tokenWidth = this.getTokenWidth(text, i);
+                    if (cursorX + tokenWidth > this.width) {
                         cursorX = 0;
                         cursorY -= baseLineHeight;
                     }
+                }
+            }
 
-                    const currentIndex = stringPointer + i;
-                    
-                    // Cache the visual position for every index (including spaces)
-                    this.visualMap.push({ index: currentIndex, x: cursorX, y: cursorY });
+            // Record visual position for this index (including the virtual index at text.length)
+            this.visualMap.push({ index: i, x: cursorX, y: cursorY });
+            updateCaret(i, cursorX, cursorY);
 
-                    if (currentIndex === this.caretIndex) {
-                        this.lastCaretPos = { x: cursorX, y: cursorY };
-                    }
+            if (isAtEnd) break;
 
-                    if (charData) {
-                        if (Math.abs(cursorY) <= this.height) {
-                            let charColor = isPlaceholder ? this.placeholderColor : new THREE.Color(1, 1, 1);
-                            let rotation = 0;
-                            let scale = 1;
-                            let offX = 0;
-                            let offY = 0;
-                            
-                            if (!isPlaceholder) {
-                                for (const style of this.styles) {
-                                    if (currentIndex >= style.start && currentIndex < style.end) {
-                                        if (style.color) charColor = style.color;
-                                        if (style.rotation !== undefined) rotation = style.rotation;
-                                        if (style.scale !== undefined) scale = style.scale;
-                                        if (style.offsetX !== undefined) offX = style.offsetX;
-                                        if (style.offsetY !== undefined) offY = style.offsetY;
-                                    }
-                                }
-                            }
+            if (char === '\n') {
+                cursorX = 0;
+                cursorY -= baseLineHeight;
+                continue;
+            }
 
-                            glyphs.push({
-                                char: charData,
-                                x: cursorX + offX,
-                                y: cursorY + offY,
-                                color: charColor,
-                                rotation: rotation,
-                                scale: scale
-                            });
+            const charData = this.charMap.get(char);
+            if (!charData) {
+                // Skip unknown characters but record their position (already done above)
+                continue;
+            }
+
+            // Character-level wrap (emergency fallback for very long words)
+            if (this.wordWrap && cursorX > 0 && cursorX + charData.xadvance > this.width) {
+                cursorX = 0;
+                cursorY -= baseLineHeight;
+                
+                // Re-adjust the visual entry for this character to the new line
+                const lastEntry = this.visualMap[this.visualMap.length - 1];
+                lastEntry.x = cursorX;
+                lastEntry.y = cursorY;
+                updateCaret(i, cursorX, cursorY);
+            }
+
+            // Only push glyphs that are within the vertical bounds
+            if (Math.abs(cursorY) <= this.height) {
+                let charColor = isPlaceholder ? this.placeholderColor : defaultColor;
+                let rotation = 0, scale = 1, offX = 0, offY = 0;
+
+                if (hasStyles) {
+                    // Apply styles - last one defined for this range wins
+                    for (let sIdx = 0; sIdx < this.styles.length; sIdx++) {
+                        const style = this.styles[sIdx];
+                        if (i >= style.start && i < style.end) {
+                            if (style.color) charColor = style.color;
+                            if (style.rotation !== undefined) rotation = style.rotation;
+                            if (style.scale !== undefined) scale = style.scale;
+                            if (style.offsetX !== undefined) offX = style.offsetX;
+                            if (style.offsetY !== undefined) offY = style.offsetY;
                         }
-                        cursorX += charData.xadvance;
                     }
                 }
-                stringPointer += word.length;
+
+                glyphs.push({
+                    char: charData,
+                    x: cursorX + offX,
+                    y: cursorY + offY,
+                    color: charColor,
+                    rotation,
+                    scale
+                });
             }
 
-            // End of full string index check (special case for end of line/string)
-            if (stringPointer === this.caretIndex) {
-                this.lastCaretPos = { x: cursorX, y: cursorY };
-            }
-            // Add a point for the newline character index itself
-            this.visualMap.push({ index: stringPointer, x: cursorX, y: cursorY });
-
-            cursorX = 0;
-            cursorY -= baseLineHeight;
-            stringPointer += 1; // for '\n'
+            cursorX += charData.xadvance;
         }
-        
-        // Final catch-all for caret at the very end of everything
-        if (stringPointer === this.caretIndex) {
-            this.lastCaretPos = { x: 0, y: cursorY };
-        }
-        this.visualMap.push({ index: stringPointer, x: 0, y: cursorY });
 
         return glyphs;
     }
+
+    private isWhitespace(char: string): boolean {
+        return char === ' ' || char === '\t';
+    }
+
+    private getTokenWidth(text: string, startIndex: number): number {
+        let width = 0;
+        const startIsWhitespace = this.isWhitespace(text[startIndex]);
+        for (let i = startIndex; i < text.length; i++) {
+            const char = text[i];
+            if (char === '\n' || this.isWhitespace(char) !== startIsWhitespace) break;
+            const data = this.charMap.get(char);
+            if (data) width += data.xadvance;
+        }
+        return width;
+    }
+
 
     /**
      * Returns the total height consumed by the text layout.
