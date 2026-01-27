@@ -34,7 +34,7 @@ export class ExhibitManager {
 
     setExhibit(id: string) {
         this.currentExhibit = id;
-        const buttons = ['showcase', 'professional', 'notebox', 'stress'];
+        const buttons = ['showcase', 'professional', 'notebox', 'stress', 'simple-stress'];
         buttons.forEach(name => {
             document.getElementById(`ex-${name}`)?.classList.toggle('active', name === id);
         });
@@ -127,16 +127,34 @@ export class ExhibitManager {
                 this.noteBoxMap.set(nb.id, nb);
             }
         } else if (id === 'stress') {
-            const grid = 64; // 64x64 = 4096 areas
-            const spacing = 15;
+            const grid = 80; // 80x80 = 6,400 areas
+            const spacing = 18;
             for (let i = 0; i < grid; i++) {
                 for (let j = 0; j < grid; j++) {
                     const area = new TextArea(this.textManager.fontData!);
                     area.width = 1000;
-                    // ~250 characters per area * 4000 areas = ~1M characters
-                    area.text = "The quick brown fox jumps over the lazy dog. MSDF Text Engine is ultra fast. ".repeat(4);
+                    area.height = 3000; // Prevent clipping characters
+                    // ~230 characters per area * 6400 areas = ~1.4M characters
+                    area.text = "The quick brown fox jumps over the lazy dog. MSDF Text Engine is ultra fast. ".repeat(3);
                     area.wordWrap = true;
-                    const pos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 50);
+                    const pos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, (Math.random() - 0.5) * 60);
+                    (area as any).worldPos = pos;
+                    (area as any).cachedLayout = area.computeLayout();
+                    this.stressAreas.push(area);
+                }
+            }
+        } else if (id === 'simple-stress') {
+            const grid = 16; // 16x16 = 256 areas
+            const spacing = 20;
+            for (let i = 0; i < grid; i++) {
+                for (let j = 0; j < grid; j++) {
+                    const area = new TextArea(this.textManager.fontData!);
+                    area.width = 1000;
+                    area.height = 5000; // Increased to prevent truncation
+                    // ~200 characters * 256 = ~50k instances
+                    area.text = "Simple performance test. MSDF is great! ".repeat(5);
+                    area.wordWrap = true;
+                    const pos = new THREE.Vector3((i - grid/2) * spacing, (j - grid/2) * spacing, 0);
                     (area as any).worldPos = pos;
                     (area as any).cachedLayout = area.computeLayout();
                     this.stressAreas.push(area);

@@ -61,6 +61,7 @@ const setupUI = () => {
     document.getElementById('ex-professional')?.addEventListener('click', () => exhibitManager.setExhibit('professional'));
     document.getElementById('ex-notebox')?.addEventListener('click', () => exhibitManager.setExhibit('notebox'));
     document.getElementById('ex-stress')?.addEventListener('click', () => exhibitManager.setExhibit('stress'));
+    document.getElementById('ex-simple-stress')?.addEventListener('click', () => exhibitManager.setExhibit('simple-stress'));
 
     document.getElementById('bg-dark')?.addEventListener('click', () => setBG(0x0a0a0a, 'bg-dark'));
     document.getElementById('bg-steel')?.addEventListener('click', () => setBG(0x1e293b, 'bg-steel'));
@@ -88,7 +89,7 @@ textManager.load('font.json', 'font.png').then(() => {
             let allLayouts: any[] = [];
 
             // --- Demo Logic Execution ---
-            if (exhibitManager.currentExhibit === 'stress') {
+            if (exhibitManager.currentExhibit === 'stress' || exhibitManager.currentExhibit === 'simple-stress') {
                 const scale = textManager.textScale;
                 for (const area of exhibitManager.stressAreas) {
                     const pos = (area as any).worldPos;
