@@ -174,4 +174,24 @@ export class NoteBox {
             z: this.position.z + 0.05
         };
     }
+
+    /**
+     * Converts a world coordinate to local TextArea space.
+     */
+    getLocalPoint(type: 'header' | 'body', worldPoint: THREE.Vector3, textScale: number) {
+        let vertOffset = 0;
+        if (type === 'header') {
+            const fontLineHeight = this.titleArea.fontData.common.lineHeight;
+            const headerHeightFont = this.headerHeight / textScale;
+            vertOffset = (headerHeightFont - fontLineHeight) / 2;
+        } else {
+            const bodyPadding = 0.2;
+            vertOffset = (this.headerHeight + bodyPadding) / textScale;
+        }
+
+        return {
+            x: (worldPoint.x - this.position.x) / textScale - (0.25 / textScale),
+            y: (worldPoint.y - this.position.y) / textScale + vertOffset
+        };
+    }
 }

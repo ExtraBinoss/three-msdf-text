@@ -251,14 +251,21 @@ const handleInteraction = () => {
         const intersects = raycaster.intersectObject(mesh);
         
         if (intersects.length > 0) {
-            const instanceId = intersects[0].instanceId!;
+            const hit = intersects[0];
+            const instanceId = hit.instanceId!;
             const box = noteBoxes.find(nb => nb.getPart(instanceId) !== null);
             if (box) {
                 const part = box.getPart(instanceId);
                 if (part === 'header' || part === 'body') {
                     editingBox = box;
                     editingPart = part;
-                    textEditor.focus(part === 'header' ? box.titleArea : box.bodyArea);
+                    
+                    // NEW: Calculate click index
+                    const localPoint = box.getLocalPoint(part, hit.point, textManager.textScale);
+                    const area = part === 'header' ? box.titleArea : box.bodyArea;
+                    const charIdx = area.getIndexAtPos(localPoint.x, localPoint.y);
+                    
+                    textEditor.focus(area, charIdx);
                 }
             }
         } else {

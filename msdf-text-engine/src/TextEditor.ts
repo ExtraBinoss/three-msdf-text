@@ -13,14 +13,17 @@ export class TextEditor {
 
     constructor(scene: THREE.Scene) {
         // Create a simple quad for the caret
-        const geometry = new THREE.PlaneGeometry(0.05, 1.0); // Narrow quad
+        const geometry = new THREE.PlaneGeometry(0.06, 1.0); // Slightly wider quad
+        geometry.translate(0, -0.5, 0); // Origin at top, hangs down
         const material = new THREE.MeshBasicMaterial({ 
             color: 0x00d4ff, 
             transparent: true,
-            opacity: 0.8
+            opacity: 0.9,
+            depthTest: false // Ensure it's always visible above the box
         });
         this.caretMesh = new THREE.Mesh(geometry, material);
         this.caretMesh.visible = false;
+        this.caretMesh.renderOrder = 999;
         scene.add(this.caretMesh);
 
         // Global key listeners
@@ -28,12 +31,12 @@ export class TextEditor {
         window.addEventListener('keypress', (e) => this.handleKeyPress(e));
     }
 
-    focus(area: TextArea | null) {
+    focus(area: TextArea | null, index?: number) {
         this.activeArea = area;
         this.isFocused = !!area;
         this.caretMesh.visible = this.isFocused;
         if (area) {
-            area.caretIndex = area.text.length; // Default to end
+            area.caretIndex = index !== undefined ? index : area.text.length;
         }
     }
 
