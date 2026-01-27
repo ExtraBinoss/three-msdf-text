@@ -87,6 +87,22 @@ export class InteractionHandler {
                 
                 if (hitBox) {
                     const part = hitBox.getPart(instanceId);
+
+                    // Single-click to move caret if already editing this exact area
+                    if (this.editingBox && this.editingBox === hitBox && this.editingPart === part && (part === 'header' || part === 'body')) {
+                        const localPoint = hitBox.getLocalPoint(part, hit.point, this.textManager.textScale);
+                        const area = part === 'header' ? hitBox.titleArea : hitBox.bodyArea;
+                        const charIdx = area.getIndexAtPos(localPoint.x, localPoint.y);
+                        this.textEditor.focus(area, charIdx);
+                        return;
+                    }
+
+                    // If clicking something else, ensure we blur previous selection (unless resizing same box?)
+                    // Actually, if we start dragging/resizing, we likely want to blur text
+                    if (this.editingBox && (this.editingBox !== hitBox || this.editingPart !== part)) {
+                        this.blur();
+                    }
+
                     if (part === 'resize') {
                         this.resizingBox = hitBox;
                         this.controls.enabled = false;

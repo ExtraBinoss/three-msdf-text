@@ -217,7 +217,7 @@ export class TextArea {
             // Priority: Find correct line (Y) first
             const dy = y - entry.y;
             // Bias Y distance to prefer the line the mouse is actually over
-            const yWeight = 2.0; 
+            const yWeight = 10.0; 
             const distSq = (x - entry.x) ** 2 + (dy * yWeight) ** 2;
 
             if (distSq < minDistSq) {
