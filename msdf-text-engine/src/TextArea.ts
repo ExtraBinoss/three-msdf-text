@@ -17,7 +17,7 @@ export class TextArea {
     public wordWrap: boolean = true;
     public lineSpacing: number = 1.0;
     
-    private fontData: FontData;
+    public fontData: FontData;
     private charMap: Map<string, Char> = new Map();
 
     constructor(fontData: FontData) {

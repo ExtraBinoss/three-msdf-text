@@ -83,17 +83,25 @@ export class NoteBox {
         const worldOffsetY = this.position.y / textScale;
         const worldOffsetZ = this.position.z;
 
+        // Title Centering: Center the first line vertically within the header
+        const fontLineHeight = this.titleArea.fontData.common.lineHeight;
+        const headerHeightFont = this.headerHeight / textScale;
+        const titleVertOffset = (headerHeightFont - fontLineHeight) / 2;
+
         const titleGlyphs = this.titleArea.computeLayout().map(g => ({
             ...g,
             x: g.x + (0.25 / textScale) + worldOffsetX, 
-            y: g.y - (0.3 / textScale) + worldOffsetY,
+            y: g.y - titleVertOffset + worldOffsetY,
             z: worldOffsetZ
         }));
+
+        const bodyPadding = 0.2; // World Text Padding
+        const bodyVertOffset = (this.headerHeight + bodyPadding) / textScale;
 
         const bodyGlyphs = this.bodyArea.computeLayout().map(g => ({
             ...g,
             x: g.x + (0.25 / textScale) + worldOffsetX, 
-            y: g.y - ((this.headerHeight + 0.4) / textScale) + worldOffsetY,
+            y: g.y - bodyVertOffset + worldOffsetY,
             z: worldOffsetZ
         }));
 
