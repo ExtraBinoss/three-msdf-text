@@ -11,10 +11,10 @@ export class TextManager {
     private mesh: THREE.InstancedMesh;
     private geometry: THREE.PlaneGeometry;
     private material: THREE.ShaderMaterial;
-    private fontData: FontData | null = null;
     private charMap: Map<string, Char> = new Map();
     private maxChars: number;
     public textScale: number = 0.01;
+    public fontData: FontData | null = null;
     private _profileData = {
         lastUpdateDuration: 0
     };
@@ -180,6 +180,53 @@ export class TextManager {
         this.mesh.instanceMatrix.needsUpdate = true;
         uvOffsetAttribute.needsUpdate = true;
 
+        this._profileData.lastUpdateDuration = performance.now() - startTime;
+    }
+
+    /**
+     * Renders a TextArea layout.
+     * @param textArea The TextArea instance to render.
+     */
+    renderTextArea(textArea: any) { // using any to avoid circular if not careful, or import type
+        const glyphs = textArea.computeLayout();
+        const startTime = performance.now();
+        
+        let instanceIndex = 0;
+        const dummy = new THREE.Object3D();
+        const uvOffsetAttribute = this.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+        
+        const scaleW = this.fontData!.common.scaleW;
+        const scaleH = this.fontData!.common.scaleH;
+        const scale = this.textScale;
+
+        for (const glyph of glyphs) {
+            if (instanceIndex >= this.maxChars) break;
+
+            const { char, x: gx, y: gy } = glyph;
+            
+            dummy.scale.set(char.width * scale, char.height * scale, 1);
+            
+            // Align based on layout coordinates
+            const posX = (gx + char.xoffset + char.width / 2) * scale;
+            const posY = (gy - char.yoffset - char.height / 2) * scale;
+            
+            dummy.position.set(posX, posY, 0);
+            dummy.updateMatrix();
+            this.mesh.setMatrixAt(instanceIndex, dummy.matrix);
+
+            // UVs
+            const u = char.x / scaleW;
+            const v = 1.0 - (char.y + char.height) / scaleH;
+            const w = char.width / scaleW;
+            const h = char.height / scaleH;
+            uvOffsetAttribute.setXYZW(instanceIndex, u, v, w, h);
+
+            instanceIndex++;
+        }
+
+        this.mesh.count = instanceIndex;
+        this.mesh.instanceMatrix.needsUpdate = true;
+        uvOffsetAttribute.needsUpdate = true;
         this._profileData.lastUpdateDuration = performance.now() - startTime;
     }
 

@@ -56,6 +56,28 @@ const stats = textManager.getProfile();
 console.log(`Rendering ${stats.visibleCharacters} chars in ${stats.lastUpdateDuration}ms`);
 ```
 
+## TextArea
+
+The `TextArea` class handles text layout and word wrapping logic. It is agnostic of Three.js and can be used to compute glyph positions for any renderer.
+
+### Constructor
+```typescript
+const textArea = new TextArea(fontData: FontData);
+```
+
+### Properties
+- **width**: The width of the text area in font pixels. Text will wrap at this boundary.
+- **height**: The height of the text area. Useful for overflow checks.
+- **text**: The string content to layout.
+- **wordWrap**: Boolean to enable/disable automatic word wrapping. Default `true`.
+- **lineSpacing**: Multiplier for line height. Default `1.0`.
+
+### Methods
+#### `computeLayout(): GlyphLayout[]`
+Returns an array of `{ char, x, y }` objects representing the calculated position for every character in the text.
+
+---
+
 ## Performance & Rendering Info
 
 The engine uses a single draw call per `TextManager` instance (via `InstancedMesh`).
