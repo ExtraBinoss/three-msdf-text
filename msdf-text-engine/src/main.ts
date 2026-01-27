@@ -26,6 +26,8 @@ const exhibitManager = new ExhibitManager(textManager, boxManager, textEditor);
 const interaction = new InteractionHandler(camera, renderer, boxManager, textManager, textEditor, controls, exhibitManager.noteBoxMap);
 
 const clock = new THREE.Clock();
+let lastExhibit = '';
+let needsUpdate = true;
 
 // --- UI Binding ---
 const setupUI = () => {
@@ -77,48 +79,57 @@ textManager.load('font.json', 'font.png').then(() => {
 
         const isLightBg = scene.background instanceof THREE.Color && scene.background.r > 0.5;
         const defaultTitleColor = isLightBg ? new THREE.Color(0,0,0) : new THREE.Color(1,1,1);
-        let allLayouts: any[] = [];
+        
+        // 1. Detect if something changed
+        const exhibitChanged = exhibitManager.currentExhibit !== lastExhibit;
+        const interactionActive = interaction.draggingBox || interaction.resizingBox || interaction.editingBox;
+        
+        if (exhibitChanged || interactionActive || needsUpdate) {
+            let allLayouts: any[] = [];
 
-        // --- Demo Logic Execution ---
-        if (exhibitManager.currentExhibit === 'stress') {
-            const scale = textManager.textScale;
-            for (const area of exhibitManager.stressAreas) {
-                const pos = (area as any).worldPos;
-                const cachedLayout = (area as any).cachedLayout;
-                
-                // Optimized color & layout extraction for 1M characters
-                for (let k = 0; k < cachedLayout.length; k++) {
-                    const glyph = cachedLayout[k];
-                    allLayouts.push({ 
-                        char: glyph.char, 
-                        x: glyph.x + pos.x / scale, 
-                        y: glyph.y + pos.y / scale, 
-                        z: pos.z, 
-                        color: glyph.color 
-                    });
+            // --- Demo Logic Execution ---
+            if (exhibitManager.currentExhibit === 'stress') {
+                const scale = textManager.textScale;
+                for (const area of exhibitManager.stressAreas) {
+                    const pos = (area as any).worldPos;
+                    const cachedLayout = (area as any).cachedLayout;
+                    
+                    // Optimized color & layout extraction for 1M characters
+                    for (let k = 0; k < cachedLayout.length; k++) {
+                        const glyph = cachedLayout[k];
+                        allLayouts.push({ 
+                            char: glyph.char, 
+                            x: glyph.x + pos.x / scale, 
+                            y: glyph.y + pos.y / scale, 
+                            z: pos.z, 
+                            color: glyph.color 
+                        });
+                    }
+                }
+            } else {
+                // Standard NoteBox Layouts
+                textEffects.update(deltaTime);
+                for (const nb of exhibitManager.noteBoxMap.values()) {
+                    // Apply Effects
+                    if (exhibitManager.currentExhibit === 'showcase' && nb.id === 'hero') {
+                        textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
+                    } else {
+                        const titleColor = exhibitManager.currentExhibit === 'notebox' ? new THREE.Color(0,0,0) : defaultTitleColor;
+                        textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, titleColor);
+                    }
+                    
+                    // Collect Layouts
+                    allLayouts.push(...nb.getLayout(textManager.textScale));
                 }
             }
-        } else {
-            // Standard NoteBox Layouts
-            textEffects.update(deltaTime);
-            for (const nb of exhibitManager.noteBoxMap.values()) {
-                // Apply Effects
-                if (exhibitManager.currentExhibit === 'showcase' && nb.id === 'hero') {
-                    textEffects.updateRainbow(nb.titleArea, 0, nb.titleArea.text.length, 1.0);
-                } else {
-                    const titleColor = exhibitManager.currentExhibit === 'notebox' ? new THREE.Color(0,0,0) : defaultTitleColor;
-                    textEffects.applyColor(nb.titleArea, 0, nb.titleArea.text.length, titleColor);
-                }
-                
-                // Collect Layouts
-                allLayouts.push(...nb.getLayout(textManager.textScale));
-            }
+
+            // --- GPU Rendering ---
+            textManager.renderGlyphs(allLayouts);
+            lastExhibit = exhibitManager.currentExhibit;
+            needsUpdate = exhibitManager.currentExhibit === 'showcase'; // Keep updating if rainbow effect is active
         }
 
-        // --- GPU Rendering ---
-        textManager.renderGlyphs(allLayouts);
-
-        // --- Interactive Caret ---
+        // --- Interactive Caret (Always updates if focused) ---
         if (interaction.editingBox && interaction.editingPart) {
             textEditor.update(deltaTime);
             textEditor.setColor(isLightBg ? 0x000000 : 0x00d4ff);
