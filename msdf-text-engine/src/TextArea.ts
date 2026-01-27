@@ -1,9 +1,17 @@
+import * as THREE from 'three';
 import type { FontData, Char } from './FontData.ts';
 
 export interface GlyphLayout {
     char: Char;
     x: number;
     y: number;
+    color: THREE.Color;
+}
+
+export interface TextStyle {
+    start: number;
+    end: number;
+    color?: THREE.Color;
 }
 
 /**
@@ -16,6 +24,7 @@ export class TextArea {
     public text: string = "";
     public wordWrap: boolean = true;
     public lineSpacing: number = 1.0;
+    public styles: TextStyle[] = [];
     
     public fontData: FontData;
     private charMap: Map<string, Char> = new Map();
@@ -35,8 +44,12 @@ export class TextArea {
         
         let cursorY = 0;
         const baseLineHeight = this.fontData.common.lineHeight * this.lineSpacing;
+        
+        // Track the current character's index in the original string
+        let stringPointer = 0;
 
-        for (const line of lines) {
+        for (let l = 0; l < lines.length; l++) {
+            const line = lines[l];
             const words = this.wordWrap ? line.split(/(\s+)/) : [line];
             let cursorX = 0;
 
@@ -60,24 +73,44 @@ export class TextArea {
                 }
 
                 // Add characters to layout
-                for (const charData of wordChars) {
-                    // Check bounds (simple efficient clipping)
-                    if (Math.abs(cursorY) > this.height) {
-                        return glyphs; // Stop processing if we exceed height
-                    }
+                for (let i = 0; i < word.length; i++) {
+                    const charStr = word[i];
+                    const charData = this.charMap.get(charStr);
+                    
+                    if (charData) {
+                        // Check bounds (simple efficient clipping)
+                        if (Math.abs(cursorY) > this.height) {
+                            return glyphs; 
+                        }
 
-                    glyphs.push({
-                        char: charData,
-                        x: cursorX,
-                        y: cursorY
-                    });
-                    cursorX += charData.xadvance;
+                        // Determine color based on string index
+                        let charColor = new THREE.Color(1, 1, 1);
+                        const currentIndex = stringPointer + i;
+
+                        for (const style of this.styles) {
+                            if (currentIndex >= style.start && currentIndex < style.end) {
+                                if (style.color) charColor = style.color;
+                            }
+                        }
+
+                        glyphs.push({
+                            char: charData,
+                            x: cursorX,
+                            y: cursorY,
+                            color: charColor
+                        });
+                        cursorX += charData.xadvance;
+                    }
                 }
+                
+                // Advance the string pointer by the length of the word (including whitespace)
+                stringPointer += word.length;
             }
             
-            // Move to next line after processing all words in a line
+            // Move to next line and skip the newline character in the pointer
             cursorX = 0;
             cursorY -= baseLineHeight;
+            stringPointer += 1; // For the '\n' we split on
         }
 
         return glyphs;

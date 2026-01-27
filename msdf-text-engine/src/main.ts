@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TextManager } from './TextManager.ts'
+import { TextEffects } from './TextEffects.ts'
 import { NoteBox } from './NoteBox.ts'
 import { BoxManager } from './BoxManager.ts'
 
@@ -23,6 +24,7 @@ controls.target.set(4, -2, 0)
 // Managers
 const boxManager = new BoxManager(scene, 100);
 const textManager = new TextManager(scene);
+const textEffects = new TextEffects();
 
 textManager.load('/font.json', '/font.png').then(() => {
     // We store references to simulate resize
@@ -39,14 +41,21 @@ textManager.load('/font.json', '/font.png').then(() => {
     const note2 = new NoteBox(textManager, boxManager);
     note2.setSize(8, 6, 1.2);
     note2.setPosition(12, 1, -2);
-    note2.titleArea.text = "BATCHING TEST";
-    note2.bodyArea.text = "This second box is drawn in the same draw calls as the first one.\n" +
-                          "1 Draw call for all boxes.\n" +
-                          "1 Draw call for all text.";
+    note2.titleArea.text = "TEXT EFFECTS";
+    note2.bodyArea.text = "Rainbow mode active!\n" +
+                          "Gradient colors below:\n" +
+                          "AMAZING EFFECTS\n" +
+                          "Per-character control!";
 
     // Simulation Loop for Resize
     let time = 0;
+    let lastTime = performance.now();
+    
     function updateLayouts() {
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+        
         time += 0.05;
         // Oscillate width and height
         const newW = 10 + Math.sin(time) * 3;
@@ -54,11 +63,36 @@ textManager.load('/font.json', '/font.png').then(() => {
         
         note.setSize(newW, newH, 1.2);
         
-        // Re-calculate layouts
+        // Update effect timer
+        textEffects.update(deltaTime);
+
+        // Apply effects directly to the Areas (STABLE!)
+        // Note 1 Title Gradient
+        textEffects.applyGradient(note.titleArea, 0, note.titleArea.text.length, [
+            new THREE.Color(0x00d4ff),
+            new THREE.Color(0xff00ff)
+        ]);
+
+        // Note 2 Title Rainbow
+        textEffects.updateRainbow(note2.titleArea, 0, note2.titleArea.text.length, 0.5);
+
+        // Note 2 "AMAZING EFFECTS" Gradient in body
+        const bodyText = note2.bodyArea.text;
+        const amazingStart = bodyText.indexOf('AMAZING');
+        if (amazingStart !== -1) {
+            textEffects.applyGradient(note2.bodyArea, amazingStart, amazingStart + 'AMAZING EFFECTS'.length, [
+                new THREE.Color(0xff0080),
+                new THREE.Color(0x00ffff),
+                new THREE.Color(0x80ff00)
+            ]);
+        }
+        
+        // Re-calculate layouts (now includes colors!)
         const layouts = [
             ...note.getLayout(textManager.textScale),
             ...note2.getLayout(textManager.textScale)
         ];
+        
         textManager.renderGlyphs(layouts);
         
         requestAnimationFrame(updateLayouts);

@@ -38,8 +38,7 @@ export class TextManager {
             vertexShader: msdfVert,
             fragmentShader: msdfFrag,
             uniforms: {
-                uMap: { value: null },
-                uColor: { value: new THREE.Color(0xffffff) }
+                uMap: { value: null }
             },
             transparent: true,
             side: THREE.DoubleSide,
@@ -48,6 +47,7 @@ export class TextManager {
 
         // Initialize mesh with initial capacity
         this.mesh = this.createMesh(this.capacity);
+        this.geometry = this.mesh.geometry as THREE.PlaneGeometry;
         scene.add(this.mesh);
     }
 
@@ -58,9 +58,12 @@ export class TextManager {
     private createMesh(capacity: number): THREE.InstancedMesh {
         const geometry = this.geometry.clone();
         
-        // Custom Attributes (aUvOffset)
+        // Custom Attributes
         const uvOffsetAttribute = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
         geometry.setAttribute('aUvOffset', uvOffsetAttribute);
+        
+        const colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
+        geometry.setAttribute('aColor', colorAttribute);
 
         const mesh = new THREE.InstancedMesh(geometry, this.material, capacity);
         mesh.count = 0;
@@ -90,6 +93,8 @@ export class TextManager {
         if (oldCount > 0) {
             const oldUvAttr = oldMesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
             const newUvAttr = newMesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+            const oldColorAttr = oldMesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
+            const newColorAttr = newMesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
             
             // Copy matrices
             for (let i = 0; i < oldCount; i++) {
@@ -105,11 +110,20 @@ export class TextManager {
                     oldUvAttr.getZ(i),
                     oldUvAttr.getW(i)
                 );
+                
+                // Copy color data
+                newColorAttr.setXYZ(
+                    i,
+                    oldColorAttr.getX(i),
+                    oldColorAttr.getY(i),
+                    oldColorAttr.getZ(i)
+                );
             }
             
             newMesh.count = oldCount;
             newMesh.instanceMatrix.needsUpdate = true;
             newUvAttr.needsUpdate = true;
+            newColorAttr.needsUpdate = true;
         }
 
         // Replace in scene
@@ -175,7 +189,8 @@ export class TextManager {
         const dummy = new THREE.Object3D();
         let instanceIndex = 0;
         
-        const uvOffsetAttribute = this.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+        let uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+        let colorAttribute = this.mesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
 
         // Common values
         const scaleW = this.fontData.common.scaleW;
@@ -205,6 +220,9 @@ export class TextManager {
             // Grow buffer if needed
             if (instanceIndex >= this.capacity) {
                 this.grow(instanceIndex + 100); // Grow with some headroom
+                // Important: Refresh attribute references as grow() replaces geometry
+                uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+                colorAttribute = this.mesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
             }
 
             // Calculate position
@@ -242,6 +260,9 @@ export class TextManager {
             const h = charData.height / scaleH;
 
             uvOffsetAttribute.setXYZW(instanceIndex, u, v, w, h);
+            
+            // Default white color
+            colorAttribute.setXYZ(instanceIndex, 1, 1, 1);
 
             // Advance cursor
             cursorX += charData.xadvance;
@@ -254,6 +275,7 @@ export class TextManager {
         this.mesh.count = instanceIndex;
         this.mesh.instanceMatrix.needsUpdate = true;
         uvOffsetAttribute.needsUpdate = true;
+        colorAttribute.needsUpdate = true;
 
         this._profileData.lastUpdateDuration = performance.now() - startTime;
     }
@@ -270,7 +292,8 @@ export class TextManager {
         const startTime = performance.now();
         let instanceIndex = 0;
         const dummy = new THREE.Object3D();
-        const uvOffsetAttribute = this.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+        let uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+        let colorAttribute = this.mesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
         
         const scaleW = this.fontData!.common.scaleW;
         const scaleH = this.fontData!.common.scaleH;
@@ -279,19 +302,14 @@ export class TextManager {
         for (const glyph of glyphs) {
             // Grow buffer if needed
             if (instanceIndex >= this.capacity) {
-                this.grow(instanceIndex + 100); // Grow with some headroom
+                this.grow(instanceIndex + 100); // Grow with some headro    om
+                // Important: Refresh attribute references
+                uvOffsetAttribute = this.mesh.geometry.getAttribute('aUvOffset') as THREE.InstancedBufferAttribute;
+                colorAttribute = this.mesh.geometry.getAttribute('aColor') as THREE.InstancedBufferAttribute;
             }
 
             const { char, x: gx, y: gy, z: gz } = glyph;
             dummy.scale.set(char.width * scale, char.height * scale, 1);
-            
-            // Glyph layout positions (gx, gy) are already potentially offset by world pos
-            // But strict NoteBox textScale logic was:
-            // x = (gx + char.xoffset + char.width/2) * scale
-            // The NoteBox layout returns {x,y} in FONT units, but offsetted.
-            // Wait, previous NoteBox change: x: g.x + (0.25 / textScale) + worldOffsetX
-            // So gx IS in FONT units.
-            // We need to multiply by scale.
             
             const posX = (gx + char.xoffset + char.width / 2) * scale;
             const posY = (gy - char.yoffset - char.height / 2) * scale;
@@ -304,6 +322,10 @@ export class TextManager {
             const u = char.x / scaleW;
             const v = 1.0 - (char.y + char.height) / scaleH;
             uvOffsetAttribute.setXYZW(instanceIndex, u, v, char.width / scaleW, char.height / scaleH);
+            
+            // Use glyph-specific color if provided
+            const finalColor = glyph.color || new THREE.Color(1, 1, 1);
+            colorAttribute.setXYZ(instanceIndex, finalColor.r, finalColor.g, finalColor.b);
 
             instanceIndex++;
         }
@@ -311,6 +333,7 @@ export class TextManager {
         this.mesh.count = instanceIndex;
         this.mesh.instanceMatrix.needsUpdate = true;
         uvOffsetAttribute.needsUpdate = true;
+        colorAttribute.needsUpdate = true;
         this._profileData.lastUpdateDuration = performance.now() - startTime;
     }
 

@@ -1,6 +1,6 @@
 varying vec2 vUv;
+varying vec3 vColor;
 uniform sampler2D uMap;
-uniform vec3 uColor;
 
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
@@ -45,5 +45,5 @@ void main() {
     
     if (opacity < 0.01) discard;
     
-    gl_FragColor = vec4(uColor, opacity);
+    gl_FragColor = vec4(vColor, opacity);
 }
