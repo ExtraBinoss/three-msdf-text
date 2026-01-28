@@ -134,4 +134,11 @@ This repository includes a pre-configured GitHub Action for zero-config deployme
 
 ## 📜 License
 
+Dependencies : 
+[threejs](https://github.com/mrdoob/three.js/blob/dev/LICENSE) : MIT
+[vite](https://github.com/vitejs/vite/blob/main/LICENSE) : MIT
+
+
+This library is MIT :
+
 MIT © [ExtraBinoss](https://github.com/ExtraBinoss)
