@@ -35,6 +35,7 @@ export class NoteBox extends THREE.Object3D {
     public autoWidth: boolean = true;
     public minWidth: number = 4;
     private headerHeight: number = 1.0;
+    private manualHeaderHeight: number | null = null;
 
     constructor(textManager: TextManager, boxManager: BoxManager, id?: string) {
         super();
@@ -176,14 +177,33 @@ export class NoteBox extends THREE.Object3D {
         return this;
     }
 
+    /** Sets the scale factor for the title text. Chainable. */
+    setTitleScale(s: number): this {
+        this.titleArea.setLocalScale(s);
+        this.updateGeometry();
+        return this;
+    }
+
+    /** Sets the scale factor for the body text. Chainable. */
+    setBodyScale(s: number): this {
+        this.bodyArea.setLocalScale(s);
+        this.updateGeometry();
+        return this;
+    }
+
+    /** Manually overrides the header height. Set to null to return to auto-height. */
+    setHeaderHeight(h: number | null): this {
+        this.manualHeaderHeight = h;
+        this.updateGeometry();
+        return this;
+    }
+
     private updateGeometry() {
-        // Ensure matrix is updated to get world positions if needed, 
-        // though BoxManager usually wants world space if it's a global manager.
-        // For now let's assume boxes are world-space in the manager.
+        // Ensure matrix is updated to get world positions
         this.updateWorldMatrix(true, false);
 
-        const fontH = this.titleArea.fontData.common.lineHeight * this.textManager.textScale;
-        this.headerHeight = fontH;
+        const fontH = this.titleArea.fontData.common.lineHeight * this.textManager.textScale * this.titleArea.localScale;
+        this.headerHeight = this.manualHeaderHeight !== null ? this.manualHeaderHeight : fontH;
 
         // Determine effective world scale to pass to the BoxManager (which manages world instances)
         const worldScale = new THREE.Vector3();
@@ -296,7 +316,7 @@ export class NoteBox extends THREE.Object3D {
             this.titleArea.wordWrap = false;
             this.titleArea.width = 999999;
             this.titleArea.computeLayout();
-            const contentW = this.titleArea.getContentWidth() * textScale;
+            const contentW = this.titleArea.getContentWidth() * textScale * this.titleArea.localScale;
             this.titleArea.wordWrap = oldWrap;
 
             const targetW = Math.max(this.minWidth, contentW + 1.0);
@@ -306,15 +326,15 @@ export class NoteBox extends THREE.Object3D {
             }
         }
 
-        this.titleArea.width = (this.width - 0.5) / textScale;
-        this.titleArea.height = (this.headerHeight - 0.1) / textScale;
-        this.bodyArea.width = (this.width - 0.5) / textScale;
+        this.titleArea.width = (this.width - 0.5) / (textScale * this.titleArea.localScale);
+        this.titleArea.height = (this.headerHeight - 0.1) / (textScale * this.titleArea.localScale);
+        this.bodyArea.width = (this.width - 0.5) / (textScale * this.bodyArea.localScale);
         
         let bodyGlyphsLocal: any[] = [];
         if (this.autoHeight) {
             this.bodyArea.height = 999999;
             bodyGlyphsLocal = this.bodyArea.computeLayout();
-            const contentH = this.bodyArea.getContentHeight() * textScale;
+            const contentH = this.bodyArea.getContentHeight() * textScale * this.bodyArea.localScale;
             const targetH = Math.max(2, contentH + this.headerHeight + 0.5);
             
             if (this.height < targetH) {
@@ -322,41 +342,43 @@ export class NoteBox extends THREE.Object3D {
                 this.updateGeometry();
             }
         } else {
-            this.bodyArea.height = (this.height - this.headerHeight - 0.5) / textScale;
+            this.bodyArea.height = (this.height - this.headerHeight - 0.5) / (textScale * this.bodyArea.localScale);
             bodyGlyphsLocal = this.bodyArea.computeLayout();
         }
 
         this.updateWorldMatrix(true, true);
         const fontLineHeight = this.titleArea.fontData.common.lineHeight;
-        const headerHeightFont = this.headerHeight / textScale;
+        const headerHeightFont = this.headerHeight / (textScale * this.titleArea.localScale);
         const titleVertOffset = (headerHeightFont - fontLineHeight) / 2;
 
         const worldScale = new THREE.Vector3();
         this.getWorldScale(worldScale);
-        const selfScale = worldScale.x; // Use X scale for text glyphs
+        const selfScale = worldScale.x; 
 
         const titleGlyphs = this.titleArea.computeLayout().map(g => {
-            const v = new THREE.Vector3(g.x * textScale, (g.y - titleVertOffset) * textScale, 0);
+            const combinedScale = textScale * this.titleArea.localScale;
+            const v = new THREE.Vector3(g.x * combinedScale, (g.y - titleVertOffset) * combinedScale, 0);
             v.applyMatrix4(this.titleArea.matrixWorld);
             return {
                 ...g,
                 x: v.x / textScale,
                 y: v.y / textScale,
                 z: v.z,
-                scale: (g.scale || 1.0) * selfScale,
+                scale: (g.scale || 1.0) * this.titleArea.localScale * selfScale,
                 rotation: this.titleArea.rotation.z + (g.rotation || 0)
             };
         });
 
         const bodyGlyphs = bodyGlyphsLocal.map(g => {
-            const v = new THREE.Vector3(g.x * textScale, g.y * textScale, 0);
+            const combinedScale = textScale * this.bodyArea.localScale;
+            const v = new THREE.Vector3(g.x * combinedScale, g.y * combinedScale, 0);
             v.applyMatrix4(this.bodyArea.matrixWorld);
             return {
                 ...g,
                 x: v.x / textScale,
                 y: v.y / textScale,
                 z: v.z,
-                scale: (g.scale || 1.0) * selfScale,
+                scale: (g.scale || 1.0) * this.bodyArea.localScale * selfScale,
                 rotation: this.bodyArea.rotation.z + (g.rotation || 0)
             };
         });

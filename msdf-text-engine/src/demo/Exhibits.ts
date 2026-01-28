@@ -307,9 +307,9 @@ export class ExhibitManager {
             
             scales.forEach((s, i) => {
                 const nb = this.textManager.createNoteBox(this.boxManager, `scale-${s}`)
-                    .setPos(-15 + i * 12, 5, 0)
+                    .setPos(-20 + i * 14, 8, 0)
                     .setBoxSize(6, 4)
-                    .setScale(s) // <--- New Feature!
+                    .setScale(s) 
                     .setTitle(`SCALE ${s}x`)
                     .setBody(`This box is scaled to ${s}x.\nBoth background and text scale together.`)
                     .setStyle({
@@ -319,26 +319,21 @@ export class ExhibitManager {
                     });
                 this.noteBoxMap.set(nb.name, nb);
             });
-            
-            // Nested scaling test
-            const outer = this.textManager.createNoteBox(this.boxManager, "outer")
-                .setPos(0, -10, 0)
-                .setBoxSize(20, 10)
-                .setScale(0.8)
-                .setTitle("NESTED HIERARCHY TEST")
-                .setBody("This box contains another NoteBox as a child.\nScaling the parent should scale the child!");
-            
-            const inner = this.textManager.createNoteBox(this.boxManager, "inner")
-                .setPos(1, -2, 0.1)
-                .setBoxSize(10, 4)
-                .setScale(0.5)
-                .setTitle("CHILD BOX (0.5x)")
-                .setBody("I am a child of the outer box!");
-            
-            outer.add(inner); 
-            
-            this.noteBoxMap.set(outer.name, outer);
-            this.noteBoxMap.set(inner.name, inner);
+
+            // Individual Component Scaling Test
+            const custom = this.textManager.createNoteBox(this.boxManager, "custom-scale")
+                .setPos(-15, -2, 0)
+                .setBoxSize(12, 6)
+                .setTitle("CUSTOM COMPONENT SCALES")
+                .setBody("Title Scale: 1.5x\nBody Scale: 0.8x\nHeader Height: 2.5\n\nThis demonstrates granular control over NoteBox elements.")
+                .setTitleScale(1.5)
+                .setBodyScale(0.8)
+                .setHeaderHeight(2.5)
+                .setStyle({
+                    headerColor1: 0x3b82f6,
+                    bodyColor1: 0x1e1e1e
+                });
+            this.noteBoxMap.set(custom.name, custom);
         }
     }
 }

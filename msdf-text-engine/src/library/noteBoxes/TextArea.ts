@@ -37,6 +37,8 @@ export class TextArea extends THREE.Object3D {
     public placeholder: string = "";
     public placeholderColor: THREE.Color = new THREE.Color(1, 1, 1).multiplyScalar(0.55);
     public defaultColor: THREE.Color = new THREE.Color(1, 1, 1);
+    /** Local scale factor for text, independent of global textScale. Defaults to 1.0. */
+    public localScale: number = 1.0;
     
     // Caret state
     /** Current index of the caret in the text string */
@@ -273,13 +275,15 @@ export class TextArea extends THREE.Object3D {
         this.updateWorldMatrix(true, false);
         
         return localGlyphs.map(g => {
-            const v = new THREE.Vector3(g.x * textScale, g.y * textScale, 0);
+            const combinedScale = textScale * this.localScale;
+            const v = new THREE.Vector3(g.x * combinedScale, g.y * combinedScale, 0);
             v.applyMatrix4(this.matrixWorld);
             return {
                 ...g,
                 x: v.x / textScale,
                 y: v.y / textScale,
                 z: v.z,
+                scale: (g.scale || 1.0) * this.localScale,
                 rotation: this.rotation.z + (g.rotation || 0)
             };
         });
@@ -331,6 +335,12 @@ export class TextArea extends THREE.Object3D {
     /** Sets whether word wrapping is enabled. Chainable. */
     setWordWrap(enabled: boolean): this {
         this.wordWrap = enabled;
+        return this;
+    }
+
+    /** Sets the local scale factor for text. Chainable. */
+    setLocalScale(s: number): this {
+        this.localScale = s;
         return this;
     }
 }

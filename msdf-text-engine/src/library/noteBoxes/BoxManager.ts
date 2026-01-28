@@ -259,4 +259,15 @@ export class BoxManager {
     public getMesh() {
         return this.mesh;
     }
+
+    /**
+     * Gets all instance data for debugging purposes.
+     */
+    public getInstanceData(): { id: number, position: THREE.Vector3, scale: THREE.Vector3 }[] {
+        return this.instances.map(inst => ({
+            id: inst.logicalId,
+            position: inst.position.clone(),
+            scale: inst.scale.clone()
+        }));
+    }
 }
