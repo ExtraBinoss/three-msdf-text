@@ -63,6 +63,7 @@ const setupUI = () => {
     document.getElementById('ex-stress')?.addEventListener('click', () => exhibitManager.setExhibit('stress', interaction));
     document.getElementById('ex-simple-stress')?.addEventListener('click', () => exhibitManager.setExhibit('simple-stress', interaction));
     document.getElementById('ex-growth')?.addEventListener('click', () => exhibitManager.setExhibit('growth', interaction));
+    document.getElementById('ex-scale')?.addEventListener('click', () => exhibitManager.setExhibit('scale', interaction));
 
     document.getElementById('bg-dark')?.addEventListener('click', () => setBG(0x0a0a0a, 'bg-dark'));
     document.getElementById('bg-steel')?.addEventListener('click', () => setBG(0x1e293b, 'bg-steel'));
@@ -138,11 +139,16 @@ textManager.load('font.json', 'font.png').then(() => {
             textEditor.setColor(isLightBg ? 0x000000 : 0x00d4ff);
 
             const caretWorld = interaction.editingBox.getCaretWorldPosition(interaction.editingPart, textManager.textScale);
+            
+            // Factor in world scale for caret height
+            const worldScale = new THREE.Vector3();
+            interaction.editingBox.getWorldScale(worldScale);
+            
             textEditor.setCaretPosition(
                 caretWorld.x, 
                 caretWorld.y, 
                 caretWorld.z, 
-                textManager.textScale * textManager.fontData!.common.lineHeight
+                textManager.textScale * textManager.fontData!.common.lineHeight * worldScale.y
             );
         }
 

@@ -147,6 +147,16 @@ export class NoteBox extends THREE.Object3D {
     }
 
     /**
+     * Fluent API: Sets the uniform scale of the NoteBox. Chainable.
+     * @param s Scale factor (default is 1.0).
+     */
+    setScale(s: number): this {
+        this.scale.set(s, s, s);
+        this.updateGeometry();
+        return this;
+    }
+
+    /**
      * Fluent API: Sets the placeholder text for the title. Chainable.
      * @param text The placeholder string.
      */
@@ -175,11 +185,15 @@ export class NoteBox extends THREE.Object3D {
         const fontH = this.titleArea.fontData.common.lineHeight * this.textManager.textScale;
         this.headerHeight = fontH;
 
+        // Determine effective world scale to pass to the BoxManager (which manages world instances)
+        const worldScale = new THREE.Vector3();
+        this.getWorldScale(worldScale);
+
         // Header
         const headerPos = new THREE.Vector3(this.width / 2, -this.headerHeight / 2, 0.01);
         headerPos.applyMatrix4(this.matrixWorld);
 
-        this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width, this.headerHeight, 1), 
+        this.boxManager.updateBox(this.headerId, headerPos, new THREE.Vector3(this.width * worldScale.x, this.headerHeight * worldScale.y, 1), 
             this.headerColor1, this.headerColor2, this.headerAlpha, this.headerGradientMode);
 
         // Body
@@ -188,14 +202,14 @@ export class NoteBox extends THREE.Object3D {
         const bodyPos = new THREE.Vector3(this.width / 2, bodyY, 0);
         bodyPos.applyMatrix4(this.matrixWorld);
         
-        this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width, bodyH, 1), 
+        this.boxManager.updateBox(this.bodyId, bodyPos, new THREE.Vector3(this.width * worldScale.x, bodyH * worldScale.y, 1), 
             this.bodyColor1, this.bodyColor2, this.bodyAlpha, this.bodyGradientMode);
 
         // Resize Handle (Bottom Right)
         const handlePos = new THREE.Vector3(this.width - 0.2, -this.height + 0.2, 0.02);
         handlePos.applyMatrix4(this.matrixWorld);
 
-        this.boxManager.updateBox(this.resizeHandleId, handlePos, new THREE.Vector3(0.4, 0.4, 1), 
+        this.boxManager.updateBox(this.resizeHandleId, handlePos, new THREE.Vector3(0.4 * worldScale.x, 0.4 * worldScale.y, 1), 
             new THREE.Color(0x888888), new THREE.Color(0xffffff), 1.0, GradientMode.RADIAL);
 
         // Position the TextAreas locally
@@ -317,6 +331,10 @@ export class NoteBox extends THREE.Object3D {
         const headerHeightFont = this.headerHeight / textScale;
         const titleVertOffset = (headerHeightFont - fontLineHeight) / 2;
 
+        const worldScale = new THREE.Vector3();
+        this.getWorldScale(worldScale);
+        const selfScale = worldScale.x; // Use X scale for text glyphs
+
         const titleGlyphs = this.titleArea.computeLayout().map(g => {
             const v = new THREE.Vector3(g.x * textScale, (g.y - titleVertOffset) * textScale, 0);
             v.applyMatrix4(this.titleArea.matrixWorld);
@@ -325,6 +343,7 @@ export class NoteBox extends THREE.Object3D {
                 x: v.x / textScale,
                 y: v.y / textScale,
                 z: v.z,
+                scale: (g.scale || 1.0) * selfScale,
                 rotation: this.titleArea.rotation.z + (g.rotation || 0)
             };
         });
@@ -337,6 +356,7 @@ export class NoteBox extends THREE.Object3D {
                 x: v.x / textScale,
                 y: v.y / textScale,
                 z: v.z,
+                scale: (g.scale || 1.0) * selfScale,
                 rotation: this.bodyArea.rotation.z + (g.rotation || 0)
             };
         });

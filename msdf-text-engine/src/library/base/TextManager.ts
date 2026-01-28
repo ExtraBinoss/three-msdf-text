@@ -283,11 +283,14 @@ export class TextManager {
             if (instanceIndex >= this.capacity) break; 
 
             const { char, x: gx, y: gy, z: gz } = glyph;
-            const finalScale = scale * (glyph.scale !== undefined ? glyph.scale : 1.0);
+            const gScale = glyph.scale !== undefined ? glyph.scale : 1.0;
+            const finalScale = scale * gScale;
+            
             dummy.scale.set(char.width * finalScale, char.height * finalScale, 1);
             
-            const posX = (gx + char.xoffset + char.width / 2) * scale;
-            const posY = (gy - char.yoffset - char.height / 2) * scale;
+            // Critical: The quad offset must ALSO be scaled by the glyph's local scale
+            const posX = (gx + (char.xoffset + char.width / 2) * gScale) * scale;
+            const posY = (gy - (char.yoffset + char.height / 2) * gScale) * scale;
             const posZ = (gz !== undefined ? gz : 0) + 0.02;
 
             dummy.position.set(posX, posY, posZ); 

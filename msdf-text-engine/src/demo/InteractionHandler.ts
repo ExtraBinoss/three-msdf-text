@@ -50,22 +50,43 @@ export class InteractionHandler {
 
             if (this.resizingBox) {
                 this.raycaster.setFromCamera(this.mouse, this.camera);
-                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -this.resizingBox.position.z);
+                
+                const worldPos = new THREE.Vector3();
+                this.resizingBox.getWorldPosition(worldPos);
+                const worldScale = new THREE.Vector3();
+                this.resizingBox.getWorldScale(worldScale);
+
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -worldPos.z);
                 const planeIntersect = new THREE.Vector3();
                 this.raycaster.ray.intersectPlane(plane, planeIntersect);
                 
-                const newW = Math.max(2, planeIntersect.x - this.resizingBox.position.x);
-                const newH = Math.max(2, -(planeIntersect.y - this.resizingBox.position.y));
+                // Calculate world-space dimensions and convert back to local units
+                const dxWorld = planeIntersect.x - worldPos.x;
+                const dyWorld = -(planeIntersect.y - worldPos.y);
+                
+                const newW = Math.max(2, dxWorld / worldScale.x);
+                const newH = Math.max(2, dyWorld / worldScale.y);
                 this.resizingBox.setSize(newW, newH);
             } else if (this.draggingBox) {
                 this.raycaster.setFromCamera(this.mouse, this.camera);
-                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -this.draggingBox.position.z);
+                
+                const worldPos = new THREE.Vector3();
+                this.draggingBox.getWorldPosition(worldPos);
+
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -worldPos.z);
                 const planeIntersect = new THREE.Vector3();
                 this.raycaster.ray.intersectPlane(plane, planeIntersect);
                 
-                const newPos = planeIntersect.sub(this.dragOffset);
-                // Lock Z to the specific box Z to ensure 2D movement
-                this.draggingBox.setPosition(newPos.x, newPos.y, this.draggingBox.position.z);
+                const newWorldPos = planeIntersect.sub(this.dragOffset);
+                
+                // Convert world position back to parent-local space for setPosition
+                if (this.draggingBox.parent) {
+                    const localPos = newWorldPos.clone();
+                    this.draggingBox.parent.worldToLocal(localPos);
+                    this.draggingBox.setPosition(localPos.x, localPos.y, this.draggingBox.position.z);
+                } else {
+                    this.draggingBox.setPosition(newWorldPos.x, newWorldPos.y, this.draggingBox.position.z);
+                }
             }
         });
 
@@ -112,13 +133,15 @@ export class InteractionHandler {
                     } else if (part === 'header' || part === 'body') {
                         this.draggingBox = hitBox;
                         
-                        // Recalculate the hit point on the NEW Z-plane to ensure 2D dragging stability
-                        // Using 'hit.point' would use the OLD Z-plane intersection, causing the box to snap back in Z 
-                        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -hitBox.position.z);
+                        const worldPos = new THREE.Vector3();
+                        hitBox.getWorldPosition(worldPos);
+
+                        // Recalculate the hit point on the world Z-plane to ensure dragging stability
+                        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -worldPos.z);
                         const planePoint = new THREE.Vector3();
                         this.raycaster.ray.intersectPlane(plane, planePoint);
                         
-                        this.dragOffset.copy(planePoint).sub(hitBox.position);
+                        this.dragOffset.copy(planePoint).sub(worldPos);
                         this.controls.enabled = false;
                     }
                 } else {
@@ -175,8 +198,14 @@ export class InteractionHandler {
         // Collect all managed boxes
         const boxes = Array.from(this.noteBoxMap.values());
         
-        // Sort boxes by current Z value to preserve relative ordering of unselected boxes
-        boxes.sort((a, b) => a.position.z - b.position.z);
+        // Sort boxes by current world Z status (using world space to be safe with nesting)
+        boxes.sort((a, b) => {
+            const az = new THREE.Vector3();
+            const bz = new THREE.Vector3();
+            a.getWorldPosition(az);
+            b.getWorldPosition(bz);
+            return az.z - bz.z;
+        });
         
         // Move the selected box to the end (top-most)
         const index = boxes.indexOf(box);
@@ -185,16 +214,25 @@ export class InteractionHandler {
             boxes.push(box);
         }
 
-        // Re-normalize Z values to keep them within a reasonable range (e.g. 0.0 to N * 0.05)
-        // This prevents Z values from growing infinitely with every click
+        // Re-normalize Z values
         const startZ = 0.0;
         const step = 0.05;
         
         boxes.forEach((b, i) => {
-            const newZ = startZ + (i * step);
-            // Only update if the Z changed significantly to avoid dirtying the geometry unnecessarily
-            if (Math.abs(b.position.z - newZ) > 0.001) {
-                b.setPosition(b.position.x, b.position.y, newZ);
+            const targetWorldZ = startZ + (i * step);
+            const currentWorldPos = new THREE.Vector3();
+            b.getWorldPosition(currentWorldPos);
+
+            if (Math.abs(currentWorldPos.z - targetWorldZ) > 0.001) {
+                if (b.parent) {
+                    // Calculate required local Z to reach target world Z
+                    const targetWorldPos = new THREE.Vector3(currentWorldPos.x, currentWorldPos.y, targetWorldZ);
+                    const localPos = targetWorldPos.clone();
+                    b.parent.worldToLocal(localPos);
+                    b.setPosition(b.position.x, b.position.y, localPos.z);
+                } else {
+                    b.setPosition(b.position.x, b.position.y, targetWorldZ);
+                }
             }
         });
     }

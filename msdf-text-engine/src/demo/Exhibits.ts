@@ -43,7 +43,7 @@ export class ExhibitManager {
 
     setExhibit(id: string, interaction?: any) {
         this.currentExhibit = id;
-        const buttons = ['showcase', 'professional', 'notebox', 'stress', 'simple-stress', 'growth'];
+        const buttons = ['showcase', 'professional', 'notebox', 'stress', 'simple-stress', 'growth', 'scale'];
         buttons.forEach(name => {
             document.getElementById(`ex-${name}`)?.classList.toggle('active', name === id);
         });
@@ -300,6 +300,45 @@ export class ExhibitManager {
                     this.noteBoxMap.set(nb.name, nb);
                 }
             }
+        } else if (id === 'scale') {
+            // Scale comparison exhibit
+            const scales = [0.5, 1.0, 1.5, 2.0];
+            const colors = [0xff5555, 0x55ff55, 0x5555ff, 0xffff55];
+            
+            scales.forEach((s, i) => {
+                const nb = this.textManager.createNoteBox(this.boxManager, `scale-${s}`)
+                    .setPos(-15 + i * 12, 5, 0)
+                    .setBoxSize(6, 4)
+                    .setScale(s) // <--- New Feature!
+                    .setTitle(`SCALE ${s}x`)
+                    .setBody(`This box is scaled to ${s}x.\nBoth background and text scale together.`)
+                    .setStyle({
+                        headerColor1: colors[i],
+                        bodyColor1: 0x111111,
+                        bodyAlpha: 0.9
+                    });
+                this.noteBoxMap.set(nb.name, nb);
+            });
+            
+            // Nested scaling test
+            const outer = this.textManager.createNoteBox(this.boxManager, "outer")
+                .setPos(0, -10, 0)
+                .setBoxSize(20, 10)
+                .setScale(0.8)
+                .setTitle("NESTED HIERARCHY TEST")
+                .setBody("This box contains another NoteBox as a child.\nScaling the parent should scale the child!");
+            
+            const inner = this.textManager.createNoteBox(this.boxManager, "inner")
+                .setPos(1, -2, 0.1)
+                .setBoxSize(10, 4)
+                .setScale(0.5)
+                .setTitle("CHILD BOX (0.5x)")
+                .setBody("I am a child of the outer box!");
+            
+            outer.add(inner); 
+            
+            this.noteBoxMap.set(outer.name, outer);
+            this.noteBoxMap.set(inner.name, inner);
         }
     }
 }
