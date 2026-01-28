@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { NoteBox } from '../library/noteBoxes/NoteBox';
 import { BoxManager, GradientMode } from '../library/noteBoxes/BoxManager';
 import { TextManager } from '../library/base/TextManager';
@@ -42,7 +43,7 @@ export class ExhibitManager {
 
     setExhibit(id: string, interaction?: any) {
         this.currentExhibit = id;
-        const buttons = ['showcase', 'professional', 'notebox', 'stress', 'simple-stress'];
+        const buttons = ['showcase', 'professional', 'notebox', 'stress', 'simple-stress', 'growth'];
         buttons.forEach(name => {
             document.getElementById(`ex-${name}`)?.classList.toggle('active', name === id);
         });
@@ -262,6 +263,32 @@ export class ExhibitManager {
                     .setWordWrap(true);
                     (area as any).cachedLayout = area.computeLayout();
                     this.stressAreas.push(area);
+                }
+            }
+        } else if (id === 'growth') {
+            // Growth Test: 100 boxes.
+            // Since BoxManager is initialized with capacity 10 in main.ts, this will force multiple grow() calls.
+            const grid = 10; // 10x10 = 100 boxes
+            const spacing = 9;
+            for (let i = 0; i < grid; i++) {
+                for (let j = 0; j < grid; j++) {
+                    const nb = this.textManager.createNoteBox(this.boxManager, `growth-${i}-${j}`)
+                        .setPos((i - grid/2) * spacing, (grid/2 - j) * 6, 0)
+                        .setBoxSize(8, 5)
+                        .setTitle(`GROWTH ${i*grid + j + 1}`)
+                        .setBody("Testing dynamic buffer growth.\nAdding boxes should be seamless.");
+                    
+                    // Varied colors to make it look interesting
+                    const r = 0.2 + (i/grid) * 0.8;
+                    const g = 0.2 + (j/grid) * 0.8;
+                    nb.setStyle({
+                        headerColor1: new THREE.Color(r, g, 0.4),
+                        headerColor2: new THREE.Color(r*0.5, g*0.5, 0.2),
+                        bodyColor1: 0x111111,
+                        bodyAlpha: 0.9
+                    });
+                    
+                    this.noteBoxMap.set(nb.name, nb);
                 }
             }
         }

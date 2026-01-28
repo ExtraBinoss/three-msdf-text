@@ -62,6 +62,7 @@ const setupUI = () => {
     document.getElementById('ex-notebox')?.addEventListener('click', () => exhibitManager.setExhibit('notebox', interaction));
     document.getElementById('ex-stress')?.addEventListener('click', () => exhibitManager.setExhibit('stress', interaction));
     document.getElementById('ex-simple-stress')?.addEventListener('click', () => exhibitManager.setExhibit('simple-stress', interaction));
+    document.getElementById('ex-growth')?.addEventListener('click', () => exhibitManager.setExhibit('growth', interaction));
 
     document.getElementById('bg-dark')?.addEventListener('click', () => setBG(0x0a0a0a, 'bg-dark'));
     document.getElementById('bg-steel')?.addEventListener('click', () => setBG(0x1e293b, 'bg-steel'));
