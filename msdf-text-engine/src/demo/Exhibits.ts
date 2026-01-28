@@ -54,6 +54,15 @@ export class ExhibitManager {
         this.clearScene(interaction);
         
         if (id === 'professional') {
+            const placeholderBox1 = this.textManager.createNoteBox(this.boxManager, "placeholder-standalone")
+                .setPos(-30, -5, 0)
+                .setBoxSize(10, 4)
+                .setTitle("") // Empty
+                .setBody("") // Empty
+                .setTitlePlaceholder("UNTITLED NOTE")
+                .setBodyPlaceholder("Click here to start typing...\nPlaceholders behave like real text but with lower opacity.");
+            this.noteBoxMap.set(placeholderBox1.name, placeholderBox1);
+
             const corp1 = this.textManager.createNoteBox(this.boxManager, "corp1")
                 .setPos(-12, 10, 0)
                 .setBoxSize(10, 5)

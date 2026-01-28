@@ -35,7 +35,7 @@ export class TextArea extends THREE.Object3D {
     public lineSpacing: number = 1.0;
     public styles: TextStyle[] = [];
     public placeholder: string = "";
-    public placeholderColor: THREE.Color = new THREE.Color(1, 1, 1).multiplyScalar(0.4);
+    public placeholderColor: THREE.Color = new THREE.Color(1, 1, 1).multiplyScalar(0.55);
     public defaultColor: THREE.Color = new THREE.Color(1, 1, 1);
     
     // Caret state

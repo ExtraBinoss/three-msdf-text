@@ -152,6 +152,7 @@ export class NoteBox extends THREE.Object3D {
      */
     setTitlePlaceholder(text: string): this {
         this.titleArea.placeholder = text;
+        this.updateGeometry();
         return this;
     }
 
@@ -161,6 +162,7 @@ export class NoteBox extends THREE.Object3D {
      */
     setBodyPlaceholder(text: string): this {
         this.bodyArea.placeholder = text;
+        this.updateGeometry();
         return this;
     }
 
