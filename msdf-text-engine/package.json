@@ -1,6 +1,6 @@
 {
   "name": "msdf-text-engine",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "High-performance MSDF text engine for Three.js",
   "type": "module",
   "main": "./dist/msdf-text-engine.umd.cjs",
