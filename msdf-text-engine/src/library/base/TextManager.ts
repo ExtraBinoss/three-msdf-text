@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { FontData, Char } from '../font/FontData.ts';
+import type { FontData, Char } from '../font/FontData';
 import { TextArea } from '../noteBoxes/TextArea';
 import { NoteBox } from '../noteBoxes/NoteBox';
 import { BoxManager } from '../noteBoxes/BoxManager';

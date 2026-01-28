@@ -158,6 +158,14 @@ export class InteractionHandler {
             this.controls.enabled = true;
         });
 
+        this.textEditor.onFocusChange((event) => {
+            if (event.focused) {
+                this.controls.enabled = false;
+            } else {
+                this.controls.enabled = true;
+            }
+        });
+
         this.renderer.domElement.addEventListener('dblclick', () => {
             this.raycaster.setFromCamera(this.mouse, this.camera);
             const mesh = this.boxManager.getMesh();

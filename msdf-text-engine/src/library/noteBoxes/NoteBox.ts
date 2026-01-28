@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { TextArea } from './TextArea.ts';
-import { TextManager } from '../base/TextManager.ts';
-import { BoxManager, GradientMode } from './BoxManager.ts';
+import { TextArea } from './TextArea';
+import { TextManager } from '../base/TextManager';
+import { BoxManager, GradientMode } from './BoxManager';
 
 /**
  * A UI component that manages a background box, a title bar, 

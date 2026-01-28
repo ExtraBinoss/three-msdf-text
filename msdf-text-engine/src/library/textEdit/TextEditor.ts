@@ -1,15 +1,39 @@
 import * as THREE from 'three';
-import { TextArea } from '../noteBoxes/TextArea.ts';
+import { TextArea } from '../noteBoxes/TextArea';
+
+/**
+ * Focus state change event data.
+ * Used for notifying external systems about text editor focus changes.
+ */
+export interface TextEditorFocusEvent {
+    /** Whether the text editor is now focused */
+    focused: boolean;
+    /** Source identifier for the event */
+    source: string;
+}
+
+/**
+ * Callback type for focus state changes.
+ */
+export type TextEditorFocusCallback = (event: TextEditorFocusEvent) => void;
 
 /**
  * Agnostic Text Editor.
  * Listens for DOM keyboard events and updates an active TextArea.
+ * 
+ * This class is designed to be engine-agnostic. Use `onFocusChange` to
+ * subscribe to focus state changes and forward them to your event system.
  */
 export class TextEditor {
     private activeArea: TextArea | null = null;
     private caretMesh: THREE.Mesh;
     private blinkClock: number = 0;
-    private isFocused: boolean = false;
+    public isFocused: boolean = false;
+
+    private focusElement: HTMLInputElement;
+    
+    /** Callbacks for focus state changes */
+    private focusChangeCallbacks: TextEditorFocusCallback[] = [];
 
     constructor(scene: THREE.Scene) {
         // Create a simple quad for the caret
@@ -27,9 +51,54 @@ export class TextEditor {
         this.caretMesh.renderOrder = 9999;
         scene.add(this.caretMesh);
 
-        // Global key listeners
-        window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-        window.addEventListener('keypress', (e) => this.handleKeyPress(e));
+        // Create hidden focus element for capturing keyboard input
+        // This element needs to receive actual DOM focus to capture keyboard events
+        this.focusElement = document.createElement('input');
+        this.focusElement.type = 'text';
+        this.focusElement.style.position = 'fixed';
+        this.focusElement.style.opacity = '0';
+        this.focusElement.style.pointerEvents = 'none';
+        this.focusElement.style.zIndex = '-1';
+        this.focusElement.style.width = '1px';
+        this.focusElement.style.height = '1px';
+        this.focusElement.setAttribute('aria-label', 'Text editor input');
+        this.focusElement.setAttribute('role', 'textbox');
+        this.focusElement.setAttribute('tabindex', '-1');
+        document.body.appendChild(this.focusElement);
+
+        // Input key listeners
+        this.focusElement.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        this.focusElement.addEventListener('keypress', (e) => this.handleKeyPress(e));
+        this.focusElement.addEventListener('blur', () => this.handleBlur());
+    }
+
+    /**
+     * Subscribe to focus state changes.
+     * Returns an unsubscribe function.
+     */
+    onFocusChange(callback: TextEditorFocusCallback): () => void {
+        this.focusChangeCallbacks.push(callback);
+        return () => {
+            const idx = this.focusChangeCallbacks.indexOf(callback);
+            if (idx !== -1) this.focusChangeCallbacks.splice(idx, 1);
+        };
+    }
+
+    /**
+     * Notify all subscribers of a focus state change.
+     */
+    private notifyFocusChange(focused: boolean) {
+        const event: TextEditorFocusEvent = {
+            focused,
+            source: 'text-editor'
+        };
+        for (const cb of this.focusChangeCallbacks) {
+            try {
+                cb(event);
+            } catch (err) {
+                console.error('[TextEditor] Error in focus change callback:', err);
+            }
+        }
     }
 
     setColor(color: number | THREE.Color) {
@@ -39,10 +108,26 @@ export class TextEditor {
 
     focus(area: TextArea | null, index?: number) {
         this.activeArea = area;
-        this.isFocused = !!area;
-        this.caretMesh.visible = this.isFocused;
+        
         if (area) {
+            this.isFocused = true;
             area.caretIndex = index !== undefined ? index : area.text.length;
+            this.caretMesh.visible = true;
+            
+            // Notify subscribers that editor is now focused
+            this.notifyFocusChange(true);
+            
+            // Use setTimeout to ensure focus is applied after current event loop
+            // to prevent browser from stealing it back immediately
+            setTimeout(() => this.focusElement.focus(), 0);
+        } else {
+            this.isFocused = false;
+            this.caretMesh.visible = false;
+            
+            // Notify subscribers that editor is no longer focused
+            this.notifyFocusChange(false);
+            
+            this.focusElement.blur();
         }
     }
 
@@ -70,8 +155,22 @@ export class TextEditor {
         this.caretMesh.updateMatrix();
     }
 
+
+    public handleBlur() {
+        if (this.isFocused) {
+            // Notify subscribers that editor lost focus
+            this.notifyFocusChange(false);
+        }
+        this.activeArea = null;
+        this.isFocused = false;
+        this.caretMesh.visible = false;
+    }
+
     private handleKeyDown(e: KeyboardEvent) {
         if (!this.activeArea || !this.isFocused) return;
+        
+        // Stop propagation to prevent backend/frontend shortcuts
+        e.stopPropagation();
 
         // Clipboard Paste
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
@@ -124,6 +223,8 @@ export class TextEditor {
     private handleKeyPress(e: KeyboardEvent) {
         if (!this.activeArea || !this.isFocused) return;
         
+        e.stopPropagation();
+
         // Keypress is better for character input as it handles modifiers correctly
         if (e.key.length === 1) {
             this.insertText(e.key);
@@ -138,5 +239,12 @@ export class TextEditor {
         const idx = this.activeArea.caretIndex;
         this.activeArea.text = text.slice(0, idx) + char + text.slice(idx);
         this.activeArea.caretIndex = idx + char.length;
+    }
+
+    dispose() {
+        this.focusChangeCallbacks = [];
+        if (this.focusElement && this.focusElement.parentNode) {
+            this.focusElement.parentNode.removeChild(this.focusElement);
+        }
     }
 }
